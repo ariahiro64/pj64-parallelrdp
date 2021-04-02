@@ -1,0 +1,505 @@
+#include "glguts.h"
+#include "gfx_1.3.h"
+#include "parallel_imp.h"
+#include "wgl_ext.h"
+#include <string.h>
+#include <stdint.h>
+#include <stdbool.h>
+
+static HDC dc;
+static HGLRC glrc;
+static HGLRC glrc_core;
+static bool fullscreen;
+
+// framebuffer texture states
+int32_t window_width;
+int32_t window_height;
+int32_t window_fullscreen;
+bool window_integerscale;
+
+#include "gl_core_3_3.c"
+#define SHADER_HEADER "#version 330 core\n"
+#define TEX_FORMAT GL_RGBA
+#define TEX_TYPE GL_UNSIGNED_BYTE
+
+static GLuint program;
+static GLuint vao;
+static GLuint texture;
+
+int32_t tex_width;
+int32_t tex_height;
+
+void win32_client_resize(HWND hWnd, HWND hStatus, int32_t nWidth, int32_t nHeight)
+{
+    RECT rclient;
+    GetClientRect(hWnd, &rclient);
+
+    RECT rwin;
+    GetWindowRect(hWnd, &rwin);
+
+    if (hStatus) {
+        RECT rstatus;
+        GetClientRect(hStatus, &rstatus);
+
+        rclient.bottom -= rstatus.bottom;
+    }
+
+    POINT pdiff;
+    pdiff.x = (rwin.right - rwin.left) - rclient.right;
+    pdiff.y = (rwin.bottom - rwin.top) - rclient.bottom;
+
+    MoveWindow(hWnd, rwin.left, rwin.top, nWidth + pdiff.x, nHeight + pdiff.y, TRUE);
+}
+
+static int TestPointer(const PROC pTest)
+{
+    if (!pTest) {
+        return 0;
+    }
+
+    ptrdiff_t iTest = (ptrdiff_t)pTest;
+
+    return iTest != 1 && iTest != 2 && iTest != 3 && iTest != -1;
+}
+
+void* IntGetProcAddress(const char *name)
+{
+    HMODULE glMod = NULL;
+    PROC pFunc = wglGetProcAddress((LPCSTR)name);
+    if (TestPointer(pFunc)) {
+        return pFunc;
+    }
+    glMod = GetModuleHandleA("OpenGL32.dll");
+    return (PROC)GetProcAddress(glMod, (LPCSTR)name);
+}
+
+#ifdef _DEBUG
+static void gl_check_errors(void)
+{
+    GLenum err;
+    static int32_t invalid_op_count = 0;
+    while ((err = glGetError()) != GL_NO_ERROR)
+    {
+        // if gl_check_errors is called from a thread with no valid
+        // GL context, it would be stuck in an infinite loop here, since
+        // glGetError itself causes GL_INVALID_OPERATION, so check for a few
+        // cycles and abort if there are too many errors of that kind
+        if (err == GL_INVALID_OPERATION)
+        {
+            if (++invalid_op_count >= 100)
+            {
+                printf("gl_check_errors: invalid OpenGL context!");
+            }
+        }
+        else
+        {
+            invalid_op_count = 0;
+        }
+
+        char *err_str;
+        switch (err)
+        {
+        case GL_INVALID_OPERATION:
+            err_str = "INVALID_OPERATION";
+            break;
+        case GL_INVALID_ENUM:
+            err_str = "INVALID_ENUM";
+            break;
+        case GL_INVALID_VALUE:
+            err_str = "INVALID_VALUE";
+            break;
+        case GL_OUT_OF_MEMORY:
+            err_str = "OUT_OF_MEMORY";
+            break;
+        case GL_INVALID_FRAMEBUFFER_OPERATION:
+            err_str = "INVALID_FRAMEBUFFER_OPERATION";
+            break;
+        default:
+            err_str = "unknown";
+        }
+        printf("gl_check_errors: %d (%s)", err, err_str);
+    }
+}
+#else
+#define gl_check_errors(...)
+#endif
+
+static GLuint gl_shader_compile(GLenum type, const GLchar *source)
+{
+    GLuint shader = glCreateShader(type);
+    glShaderSource(shader, 1, &source, NULL);
+    glCompileShader(shader);
+
+    GLint param;
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &param);
+
+    if (!param)
+    {
+        GLchar log[4096];
+        glGetShaderInfoLog(shader, sizeof(log), NULL, log);
+        printf("%s shader error: %s\n", type == GL_FRAGMENT_SHADER ? "Frag" : "Vert", log);
+    }
+
+    return shader;
+}
+
+static GLuint gl_shader_link(GLuint vert, GLuint frag)
+{
+    GLuint program = glCreateProgram();
+    glAttachShader(program, vert);
+    glAttachShader(program, frag);
+    glLinkProgram(program);
+
+    GLint param;
+    glGetProgramiv(program, GL_LINK_STATUS, &param);
+
+    if (!param)
+    {
+        GLchar log[4096];
+        glGetProgramInfoLog(program, sizeof(log), NULL, log);
+        printf("Shader link error: %s\n", log);
+    }
+
+    glDeleteShader(frag);
+    glDeleteShader(vert);
+
+    return program;
+}
+
+bool screen_write(struct frame_buffer *fb)
+{
+    bool buffer_size_changed = tex_width != fb->width || tex_height != fb->height;
+
+    // check if the framebuffer size has changed
+    if (buffer_size_changed)
+    {
+        tex_width = fb->width;
+        tex_height = fb->height;
+        // set pitch for all unpacking operations
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, fb->pitch);
+        // reallocate texture buffer on GPU
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, tex_width,
+                     tex_height, 0, TEX_FORMAT, TEX_TYPE, fb->pixels);
+    }
+    else
+    {
+        // copy local buffer to GPU texture buffer
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, tex_width, tex_height,
+                        TEX_FORMAT, TEX_TYPE, fb->pixels);
+    }
+
+    return buffer_size_changed;
+}
+
+void screen_read(struct frame_buffer *fb, bool alpha)
+{
+    GLint vp[4];
+    glGetIntegerv(GL_VIEWPORT, vp);
+
+    fb->width = vp[2];
+    fb->height = vp[3];
+    fb->pitch = fb->width;
+
+    if (fb->pixels)
+    {
+        glReadPixels(vp[0], vp[1], vp[2], vp[3], alpha ? GL_RGBA : GL_RGB, TEX_TYPE, fb->pixels);
+    }
+}
+
+void gl_screen_render()
+{
+    RECT rect;
+    GetClientRect(gfx.hWnd, &rect);
+
+
+ // status bar covers the client area, so exclude it from calculation
+    RECT statusrect;
+    SetRectEmpty(&statusrect);
+
+    if (gfx.hStatusBar) {
+        GetClientRect(gfx.hStatusBar, &statusrect);
+        rect.bottom -= statusrect.bottom;
+    }
+
+    int32_t win_width = rect.right - rect.left;
+    int32_t win_height = rect.bottom - rect.top;
+
+    // default to bottom left corner of the window above the status bar
+    int32_t vp_x = 0;
+    int32_t vp_y = statusrect.bottom;
+
+
+
+
+    if(window_integerscale)
+    {
+    float aspect = 640 / 480;
+    int width = win_width;
+    int height = (int)roundf(width / aspect);
+    if (height > win_height)
+    {
+        height = win_height;
+        width = (int)roundf(height * aspect);
+    }
+    vp_x = (win_width / 2) - (width / 2);
+    vp_y += (window_height / 2) - (height / 2);
+    glViewport(vp_x, win_height-(vp_y+height), width, height);
+    }
+    else
+    {
+    int32_t hw =  480 * win_width;
+    int32_t wh = 640 * win_height;
+
+    // add letterboxes or pillarboxes if the window has a different aspect ratio
+    // than the current display mode
+    if (hw > wh) {
+        int32_t w_max = wh / 480;
+        vp_x += (win_width - w_max) / 2;
+        win_width = w_max;
+    } else if (hw < wh) {
+        int32_t h_max = hw / 640;
+        vp_y += (win_height - h_max) / 2;
+        win_height = h_max;
+    }
+    // configure viewport
+    glViewport(vp_x, vp_y, win_width, win_height);
+    }
+
+    
+    // draw fullscreen triangle
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+}
+
+void gl_screen_clear(void)
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+void gl_screen_close(void)
+{
+    tex_width = 0;
+    tex_height = 0;
+
+    glDeleteTextures(1, &texture);
+    glDeleteVertexArrays(1, &vao);
+    glDeleteProgram(program);
+}
+#define WINDOW_DEFAULT_WIDTH 1024 
+#define WINDOW_DEFAULT_HEIGHT 768 
+void screen_init()
+{
+    /* Get the core Video Extension function pointers from the library handle */
+     if (!fullscreen) {
+        LONG style = GetWindowLong(gfx.hWnd, GWL_STYLE);
+        style |= WS_SIZEBOX | WS_MAXIMIZEBOX;
+        SetWindowLong(gfx.hWnd, GWL_STYLE, style);
+
+        BOOL zoomed = IsZoomed(gfx.hWnd);
+
+        if (zoomed) {
+            ShowWindow(gfx.hWnd, SW_RESTORE);
+        }
+
+        // Fix client size after changing the window style, otherwise the PJ64
+        // menu will be displayed incorrectly.
+        // For some reason, this needs to be called twice, probably because the
+        // style set above isn't applied immediately.
+        for (int i = 0; i < 2; i++) {
+            win32_client_resize(gfx.hWnd, gfx.hStatusBar, WINDOW_DEFAULT_WIDTH, WINDOW_DEFAULT_HEIGHT);
+        }
+
+        if (zoomed) {
+            ShowWindow(gfx.hWnd, SW_MAXIMIZE);
+        }
+    }
+
+    PIXELFORMATDESCRIPTOR win_pfd = {
+        sizeof(PIXELFORMATDESCRIPTOR), 1,
+        PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER, // Flags
+        PFD_TYPE_RGBA, // The kind of framebuffer. RGBA or palette.
+        32,            // Colordepth of the framebuffer.
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        24, // Number of bits for the depthbuffer
+        8,  // Number of bits for the stencilbuffer
+        0,  // Number of Aux buffers in the framebuffer.
+        PFD_MAIN_PLANE, 0, 0, 0, 0
+    };
+
+    dc = GetDC(gfx.hWnd);
+    if (!dc) {
+
+    }
+
+    int32_t win_pf = ChoosePixelFormat(dc, &win_pfd);
+    if (!win_pf) {
+
+    }
+    SetPixelFormat(dc, win_pf, &win_pfd);
+
+    // create legacy context, required for wglGetProcAddress to work properly
+    glrc = wglCreateContext(dc);
+    if (!glrc || !wglMakeCurrent(dc, glrc)) {
+
+    }
+
+    // load wgl extension
+    wgl_LoadFunctions(dc);
+
+    // attributes for a 3.3 core profile without all the legacy stuff
+    GLint attribs[] = {
+        WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
+        WGL_CONTEXT_MINOR_VERSION_ARB, 3,
+        WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+        0
+    };
+
+    // create the actual context
+    glrc_core = wglCreateContextAttribsARB(dc, glrc, attribs);
+    if (!glrc_core || !wglMakeCurrent(dc, glrc_core)) {
+        // rendering probably still works with the legacy context, so just send
+        // a warning
+    }
+
+    // enable vsync
+    wglSwapIntervalEXT(1);
+
+    // load OpenGL function pointers
+    ogl_LoadFunctions();
+
+    // shader sources for drawing a clipped full-screen triangle. the geometry
+    // is defined by the vertex ID, so a VBO is not required.
+    const GLchar *vert_shader =
+        SHADER_HEADER
+        "out vec2 uv;\n"
+        "void main(void) {\n"
+        "    uv = vec2((gl_VertexID << 1) & 2, gl_VertexID & 2);\n"
+        "    gl_Position = vec4(uv * vec2(2.0, -2.0) + vec2(-1.0, 1.0), 0.0, 1.0);\n"
+        "}\n";
+
+    const GLchar *frag_shader =
+        SHADER_HEADER
+        "in vec2 uv;\n"
+        "layout(location = 0) out vec4 color;\n"
+        "uniform sampler2D tex0;\n"
+        "void main(void) {\n"
+        "color = texture(tex0, uv);\n"
+        "}\n";
+
+    // compile and link OpenGL program
+    GLuint vert = gl_shader_compile(GL_VERTEX_SHADER, vert_shader);
+    GLuint frag = gl_shader_compile(GL_FRAGMENT_SHADER, frag_shader);
+    program = gl_shader_link(vert, frag);
+    glUseProgram(program);
+
+    // prepare dummy VAO
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+
+    // prepare texture
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    // check if there was an error when using any of the commands above
+    gl_check_errors();
+}
+
+void screen_swap(bool blank)
+{
+    if (IsIconic(gfx.hWnd)) {
+        return;
+    }
+
+    // clear current buffer, indicating the start of a new frame
+    gl_screen_clear();
+
+    if (!blank)
+    {
+        gl_screen_render();
+    }
+
+   SwapBuffers(dc);
+
+}
+
+void screen_set_fullscreen(bool _fullscreen)
+{
+    static HMENU old_menu;
+    static LONG old_style;
+    static WINDOWPLACEMENT old_pos;
+
+    if (_fullscreen) {
+        // hide curser
+        ShowCursor(FALSE);
+
+        // hide status bar
+        if (gfx.hStatusBar) {
+            ShowWindow(gfx.hStatusBar, SW_HIDE);
+        }
+
+        // disable menu and save it to restore it later
+        old_menu = GetMenu(gfx.hWnd);
+        if (old_menu) {
+            SetMenu(gfx.hWnd, NULL);
+        }
+
+        // save old window position and size
+        GetWindowPlacement(gfx.hWnd, &old_pos);
+
+        // use virtual screen dimensions for fullscreen mode
+        int32_t vs_width = GetSystemMetrics(SM_CXSCREEN);
+        int32_t vs_height = GetSystemMetrics(SM_CYSCREEN);
+
+        // disable all styles to get a borderless window and save it to restore
+        // it later
+        old_style = GetWindowLong(gfx.hWnd, GWL_STYLE);
+        SetWindowLong(gfx.hWnd, GWL_STYLE, WS_VISIBLE);
+
+        // resize window so it covers the entire virtual screen
+        SetWindowPos(gfx.hWnd, HWND_TOP, 0, 0, vs_width, vs_height, SWP_SHOWWINDOW);
+    } else {
+        // restore cursor
+        ShowCursor(TRUE);
+
+        // restore status bar
+        if (gfx.hStatusBar) {
+            ShowWindow(gfx.hStatusBar, SW_SHOW);
+        }
+
+        // restore menu
+        if (old_menu) {
+            SetMenu(gfx.hWnd, old_menu);
+            old_menu = NULL;
+        }
+
+        // restore style
+        SetWindowLong(gfx.hWnd, GWL_STYLE, old_style);
+
+        // restore window size and position
+        SetWindowPlacement(gfx.hWnd, &old_pos);
+    }
+    fullscreen = _fullscreen;
+}
+
+bool screen_get_fullscreen()
+{
+    return false;
+}
+
+void screen_toggle_fullscreen()
+{
+    screen_set_fullscreen(!screen_get_fullscreen());
+}
+
+void screen_close(void)
+{
+    gl_screen_close();
+
+     if (glrc_core) {
+        wglDeleteContext(glrc_core);
+    }
+
+    wglDeleteContext(glrc);
+
+}
