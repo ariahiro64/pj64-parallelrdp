@@ -29,6 +29,40 @@ static GLuint texture;
 int32_t tex_width;
 int32_t tex_height;
 
+#define MSG_BUFFER_LEN 256
+
+void msg_error(const char * err, ...)
+{
+    va_list arg;
+    va_start(arg, err);
+    char buf[MSG_BUFFER_LEN];
+    vsprintf_s(buf, sizeof(buf), err, arg);
+    MessageBoxA(0, buf, "parallel : fatal error", MB_OK);
+    va_end(arg);
+    exit(0);
+}
+
+void msg_warning(const char* err, ...)
+{
+    va_list arg;
+    va_start(arg, err);
+    char buf[MSG_BUFFER_LEN];
+    vsprintf_s(buf, sizeof(buf), err, arg);
+    MessageBox(0, buf, "parallel" ": warning", MB_OK);
+    va_end(arg);
+}
+
+void msg_debug(const char* err, ...)
+{
+    va_list arg;
+    va_start(arg, err);
+    char buf[MSG_BUFFER_LEN];
+    vsprintf_s(buf, sizeof(buf), err, arg);
+    strcat_s(buf, sizeof(buf), "\n");
+    OutputDebugStringA(buf);
+    va_end(arg);
+}
+
 void win32_client_resize(HWND hWnd, HWND hStatus, int32_t nWidth, int32_t nHeight)
 {
     RECT rclient;
@@ -284,7 +318,7 @@ void gl_screen_close(void)
     glDeleteVertexArrays(1, &vao);
     glDeleteProgram(program);
 }
-#define WINDOW_DEFAULT_WIDTH 1024 
+#define WINDOW_DEFAULT_WIDTH windo 
 #define WINDOW_DEFAULT_HEIGHT 768 
 void screen_init()
 {
@@ -305,7 +339,7 @@ void screen_init()
         // For some reason, this needs to be called twice, probably because the
         // style set above isn't applied immediately.
         for (int i = 0; i < 2; i++) {
-            win32_client_resize(gfx.hWnd, gfx.hStatusBar, WINDOW_DEFAULT_WIDTH, WINDOW_DEFAULT_HEIGHT);
+            win32_client_resize(gfx.hWnd, gfx.hStatusBar, window_width, window_height);
         }
 
         if (zoomed) {
@@ -327,11 +361,13 @@ void screen_init()
 
     dc = GetDC(gfx.hWnd);
     if (!dc) {
+        msg_error("Can't get device context.");
 
     }
 
     int32_t win_pf = ChoosePixelFormat(dc, &win_pfd);
     if (!win_pf) {
+  msg_error("Can't choose pixel format.");
 
     }
     SetPixelFormat(dc, win_pf, &win_pfd);
@@ -339,6 +375,7 @@ void screen_init()
     // create legacy context, required for wglGetProcAddress to work properly
     glrc = wglCreateContext(dc);
     if (!glrc || !wglMakeCurrent(dc, glrc)) {
+  msg_error("Can't create OpenGL context.");
 
     }
 
@@ -358,6 +395,8 @@ void screen_init()
     if (!glrc_core || !wglMakeCurrent(dc, glrc_core)) {
         // rendering probably still works with the legacy context, so just send
         // a warning
+            msg_warning("Can't create OpenGL 3.3 core context.");
+
     }
 
     // enable vsync

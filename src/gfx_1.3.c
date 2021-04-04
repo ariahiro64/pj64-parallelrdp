@@ -54,7 +54,7 @@
 
 
 
-static bool warn_hle;
+static bool warn_hle = false;
 static bool plugin_initialized;
 
 GFX_INFO gfx;
@@ -104,6 +104,11 @@ void plugin_close(void)
 {
 }
 
+EXPORT void CALL CaptureScreen(char* directory)
+{
+
+}
+
 EXPORT void CALL GetDllInfo(PLUGIN_INFO* PluginInfo)
 {
     PluginInfo->Version = 0x0103;
@@ -114,11 +119,15 @@ EXPORT void CALL GetDllInfo(PLUGIN_INFO* PluginInfo)
     PluginInfo->MemoryBswaped = TRUE;
 }
 
-EXPORT int CALL InitiateGFX(GFX_INFO Gfx_Info)
+EXPORT BOOL CALL InitiateGFX(GFX_INFO Gfx_Info)
 {
     gfx = Gfx_Info;
+    plugin_init();
+    return TRUE;
+}
 
-    return 1;
+EXPORT void CALL CloseDLL(void)
+{
 }
 
 EXPORT void CALL MoveScreen(int xpos, int ypos)
@@ -127,6 +136,10 @@ EXPORT void CALL MoveScreen(int xpos, int ypos)
 
 EXPORT void CALL ProcessDList(void)
 {
+     if (!warn_hle) {
+        msg_warning("Please disable 'Graphic HLE' in the plugin settings.");
+        warn_hle = true;
+    }
 }
 
 EXPORT void CALL ProcessRDPList(void)
@@ -137,17 +150,28 @@ EXPORT void CALL ProcessRDPList(void)
 EXPORT void CALL RomOpen(void)
 {
     window_fullscreen = false;
-    window_width = 1024;
-    window_height = 768;
-    vk_rescaling = 0;
-    vk_ssreadbacks = 0;
+    window_width = 1280;
+    window_height = 960;
+    vk_rescaling = 4;
+    vk_ssreadbacks = true;
     window_integerscale = 0;
-    vk_ssdither = 0;
+    vk_ssdither = true;
 
 
-    plugin_init();
+   
     vk_init();
 }
+
+
+EXPORT void CALL DrawScreen(void)
+{
+}
+
+EXPORT void CALL ReadScreen(void **dest, long *width, long *height)
+{
+}
+
+
 
 EXPORT void CALL RomClosed(void)
 {
