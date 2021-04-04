@@ -318,8 +318,6 @@ void gl_screen_close(void)
     glDeleteVertexArrays(1, &vao);
     glDeleteProgram(program);
 }
-#define WINDOW_DEFAULT_WIDTH windo 
-#define WINDOW_DEFAULT_HEIGHT 768 
 void screen_init()
 {
     /* Get the core Video Extension function pointers from the library handle */
