@@ -307,12 +307,12 @@ EXPORT void CALL RomClosed(void)
 
 EXPORT void CALL ShowCFB(void)
 {
-    vk_rasterize();
+  //  vk_rasterize();
 }
 
 EXPORT void CALL UpdateScreen(void)
 {
-    vk_rasterize();
+   // vk_rasterize();
 }
 
 EXPORT void CALL ViStatusChanged(void)
