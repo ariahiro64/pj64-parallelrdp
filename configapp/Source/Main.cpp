@@ -76,7 +76,8 @@ struct Settings {
 #define KEY_NATIVETEXTLOD 14
 #define KEY_NATIVETEXTRECT 15
 #define KEY_VSYNC 16
-settingkey setting_defaults[17]
+#define KEY_DOWNSCALING 17
+settingkey setting_defaults[18]
 {
 	{"KEY_FULLSCREEN", 0},
 	{"KEY_UPSCALING", 0},
@@ -94,7 +95,8 @@ settingkey setting_defaults[17]
 	{"KEY_VIDITHER", 1},
 	{"KEY_NATIVETEXTLOD", 0},
 	{"KEY_NATIVETEXTRECT", 1},
-	{"KEY_VSYNC", 1}
+	{"KEY_VSYNC", 1},
+	{"KEY_DOWNSCALING", 0}
 };
 
 void save_coresettings()
@@ -109,7 +111,7 @@ void save_coresettings()
 	fclose(fp);
 	ini_t* ini = ini_load(data, NULL);
 	free(data);
-	int num_vars = 16;
+	int num_vars = 18;
 	int section =
 		ini_find_section(ini, "Settings", strlen("Settings"));
 	int vars_infile = ini_property_count(ini, section);
@@ -117,7 +119,7 @@ void save_coresettings()
 	if (vars_infile != num_vars) {
 		fclose(fp);
 	}
-	for (int i = 0; i < 17; i++) {
+	for (int i = 0; i < num_vars-1; i++) {
 		char snum[10];
 		int num = setting_defaults[i].val;
 		itoa(num, snum, 10);
@@ -142,7 +144,7 @@ void init_coresettings() {
 		ini_t* ini = ini_create(NULL);
 		int section =
 			ini_section_add(ini, "Settings", strlen("Settings"));
-		for (int i = 0; i < 17; i++) {
+		for (int i = 0; i < 18; i++) {
 			char snum[10];
 			int num = setting_defaults[i].val;
 			itoa(num, snum, 10);
@@ -362,8 +364,15 @@ BOOL CALLBACK DlgFunc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	SendDlgItemMessage(hWnd, ComboUpscaler, CB_ADDSTRING, 0, (LPARAM)"4x");
 	SendDlgItemMessage(hWnd, ComboUpscaler, CB_ADDSTRING, 0, (LPARAM)"8x (hi-end GPUs only");
 
+	SendDlgItemMessage(hWnd, ComboUpscaler2, CB_ADDSTRING, 0, (LPARAM)"None");
+	SendDlgItemMessage(hWnd, ComboUpscaler2, CB_ADDSTRING, 0, (LPARAM)"1/2");
+	SendDlgItemMessage(hWnd, ComboUpscaler2, CB_ADDSTRING, 0, (LPARAM)"1/4");
+	SendDlgItemMessage(hWnd, ComboUpscaler2, CB_ADDSTRING, 0, (LPARAM)"1/8");
+
 	SendDlgItemMessage(hWnd, ComboDeinterlace, CB_ADDSTRING, 0, (LPARAM)"Bob");
 	SendDlgItemMessage(hWnd, ComboDeinterlace, CB_ADDSTRING, 0, (LPARAM)"Weave");
+
+	SendDlgItemMessage(hWnd, ComboUpscaler2, CB_SETCURSEL, setting_defaults[KEY_DOWNSCALING].val, 0);
 
 	switch (setting_defaults[KEY_UPSCALING].val)
 	{
@@ -634,6 +643,7 @@ BOOL CALLBACK DlgFunc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			setting_defaults[KEY_SCREEN_HEIGHT].val = ress[SendDlgItemMessage(hWnd, ComboResolution, CB_GETCURSEL, 0, 0)].h;
 			setting_defaults[KEY_FULLSCREEN].val = SendDlgItemMessage(hWnd, CheckFullscreen, BM_GETCHECK, 0, 0);
 			setting_defaults[KEY_VSYNC].val = SendDlgItemMessage(hWnd, CheckVerticalSync, BM_GETCHECK, 0, 0);
+			setting_defaults[KEY_DOWNSCALING].val = SendDlgItemMessage(hWnd, ComboUpscaler2, CB_GETCURSEL, 0, 0);
 			save_coresettings();
 			EndDialog(hWnd, TRUE);
 		} break;
