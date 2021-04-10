@@ -61,7 +61,7 @@ typedef struct settingkey {
 #define KEY_NATIVETEXTRECT 15
 #define KEY_VSYNC 16
 #define KEY_DOWNSCALING 17
-#define NUM_CONFIGVARS
+#define NUM_CONFIGVARS 18
 
 struct settingkey setting_defaults[NUM_CONFIGVARS]=
 {
