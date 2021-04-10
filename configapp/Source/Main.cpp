@@ -120,7 +120,7 @@ void save_coresettings()
 	if (vars_infile != NUM_CONFIGVARS) {
 		fclose(fp);
 	}
-	for (int i = 0; i < NUM_CONFIGVARS; i++) {
+	for (int i = 0; i < NUM_CONFIGVARS-1; i++) {
 		char snum[10];
 		int num = setting_defaults[i].val;
 		itoa(num, snum, 10);
@@ -178,7 +178,7 @@ void init_coresettings() {
 			fclose(fp);
 		}
 		bool save = false;
-		for (int i = 0; i < NUM_CONFIGVARS; i++) {
+		for (int i = 0; i < NUM_CONFIGVARS-1; i++) {
 			int idx =
 				ini_find_property(ini, section, (char*)setting_defaults[i].name,
 					strlen(setting_defaults[i].name));
