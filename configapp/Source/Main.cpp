@@ -77,7 +77,8 @@ struct Settings {
 #define KEY_NATIVETEXTRECT 15
 #define KEY_VSYNC 16
 #define KEY_DOWNSCALING 17
-settingkey setting_defaults[18]
+#define NUM_CONFIGVARS 18
+settingkey setting_defaults[NUM_CONFIGVARS]
 {
 	{"KEY_FULLSCREEN", 0},
 	{"KEY_UPSCALING", 0},
@@ -111,15 +112,15 @@ void save_coresettings()
 	fclose(fp);
 	ini_t* ini = ini_load(data, NULL);
 	free(data);
-	int num_vars = 18;
+	
 	int section =
 		ini_find_section(ini, "Settings", strlen("Settings"));
 	int vars_infile = ini_property_count(ini, section);
 
-	if (vars_infile != num_vars) {
+	if (vars_infile != NUM_CONFIGVARS) {
 		fclose(fp);
 	}
-	for (int i = 0; i < num_vars-1; i++) {
+	for (int i = 0; i < NUM_CONFIGVARS; i++) {
 		char snum[10];
 		int num = setting_defaults[i].val;
 		itoa(num, snum, 10);
@@ -137,14 +138,13 @@ void save_coresettings()
 }
 
 void init_coresettings() {
-
 	FILE* fp = _wfopen(L"parasettings.ini", L"r");
 	if (!fp) {
 		// create a new file with defaults
 		ini_t* ini = ini_create(NULL);
 		int section =
 			ini_section_add(ini, "Settings", strlen("Settings"));
-		for (int i = 0; i < 18; i++) {
+		for (int i = 0; i < NUM_CONFIGVARS; i++) {
 			char snum[10];
 			int num = setting_defaults[i].val;
 			itoa(num, snum, 10);
@@ -169,16 +169,16 @@ void init_coresettings() {
 		fclose(fp);
 		ini_t* ini = ini_load(data, NULL);
 		free(data);
-		int num_vars = 16;
+		
 		int section =
 			ini_find_section(ini, "Settings", strlen("Settings"));
 		int vars_infile = ini_property_count(ini, section);
 
-		if (vars_infile != num_vars) {
+		if (vars_infile != NUM_CONFIGVARS) {
 			fclose(fp);
 		}
 		bool save = false;
-		for (int i = 0; i < num_vars; i++) {
+		for (int i = 0; i < NUM_CONFIGVARS; i++) {
 			int idx =
 				ini_find_property(ini, section, (char*)setting_defaults[i].name,
 					strlen(setting_defaults[i].name));
@@ -373,6 +373,7 @@ BOOL CALLBACK DlgFunc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	SendDlgItemMessage(hWnd, ComboDeinterlace, CB_ADDSTRING, 0, (LPARAM)"Weave");
 
 	SendDlgItemMessage(hWnd, ComboUpscaler2, CB_SETCURSEL, setting_defaults[KEY_DOWNSCALING].val, 0);
+
 
 	switch (setting_defaults[KEY_UPSCALING].val)
 	{
@@ -607,27 +608,11 @@ BOOL CALLBACK DlgFunc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		{
 		case ButtonRun:
 		{
+			int lut[4] = { 0,2,4,8 };
 
 			int ups = SendDlgItemMessage(hWnd, ComboUpscaler, CB_GETCURSEL, 0, 0);
-			switch (ups)
-			{
-			case 0:
-				setting_defaults[KEY_UPSCALING].val = 0;
-				break;
-			case 1:
-				setting_defaults[KEY_UPSCALING].val = 2;
-				break;
-			case 2: 
-				setting_defaults[KEY_UPSCALING].val = 4;
-				break;
-			case 3:
-				setting_defaults[KEY_UPSCALING].val = 8;
-				break;
-
-
-			default:
-				break;
-			}
+			setting_defaults[KEY_UPSCALING].val = lut[ups];
+	
 
 			setting_defaults[KEY_DEINTERLACE].val = SendDlgItemMessage(hWnd, ComboDeinterlace, CB_GETCURSEL, 0, 0);
 			setting_defaults[KEY_SSREADBACKS].val = SendDlgItemMessage(hWnd, SSREADS, BM_GETCHECK, 0, 0);

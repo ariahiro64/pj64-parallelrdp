@@ -23,24 +23,6 @@
 
 #define M64P_PLUGIN_PROTOTYPES 1
 
-#define KEY_FULLSCREEN "Fullscreen"
-#define KEY_SCREEN_WIDTH "ScreenWidth"
-#define KEY_SCREEN_HEIGHT "ScreenHeight"
-#define KEY_UPSCALING "Upscaling"
-#define KEY_SSDITHER "SuperscaledDither"
-#define KEY_SSREADBACKS "SuperscaledReads"
-#define KEY_OVERSCANCROP "CropOverscan"
-#define KEY_DIVOT "Divot"
-#define KEY_GAMMADITHER "GammaDither"
-#define KEY_AA "VIAA"
-#define KEY_VIBILERP "VIBilerp"
-#define KEY_VIDITHER "VIDither"
-#define KEY_DOWNSCALE "DownScale"
-#define KEY_NATIVETEXTRECT "NativeTextRECT"
-#define KEY_NATIVETEXTLOD "NativeTextLOD"
-#define KEY_DEINTERLACE "Deinterlace"
-#define KEY_INTEGER "IntegerScale"
-
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -79,9 +61,9 @@ typedef struct settingkey {
 #define KEY_NATIVETEXTRECT 15
 #define KEY_VSYNC 16
 #define KEY_DOWNSCALING 17
+#define NUM_CONFIGVARS
 
-
-struct settingkey setting_defaults[18]=
+struct settingkey setting_defaults[NUM_CONFIGVARS]=
 {
 	{"KEY_FULLSCREEN", 0},
 	{"KEY_UPSCALING", 0},
@@ -99,19 +81,18 @@ struct settingkey setting_defaults[18]=
 	{"KEY_VIDITHER", 1},
 	{"KEY_NATIVETEXTLOD", 0},
 	{"KEY_NATIVETEXTRECT", 1},
-    {"KEY_VSYNC", 1},
+        {"KEY_VSYNC", 1},
 	{"KEY_DOWNSCALE", 0}
 };
 
 void init_coresettings() {
-
-	FILE* fp = fopen("parasettings.ini", L"r");
+	FILE* fp = _wfopen(L"parasettings.ini", L"r");
 	if (!fp) {
 		// create a new file with defaults
 		ini_t* ini = ini_create(NULL);
 		int section =
 			ini_section_add(ini, "Settings", strlen("Settings"));
-		for (int i = 0; i < 18; i++) {
+		for (int i = 0; i < NUM_CONFIGVARS; i++) {
 			char snum[10];
 			int num = setting_defaults[i].val;
 			itoa(num, snum, 10);
@@ -121,7 +102,7 @@ void init_coresettings() {
 		char* data = (char*)malloc(size);
 		size = ini_save(ini, data, size); // Actually save the file
 		ini_destroy(ini);
-		fp = fopen("parasettings.ini", L"w");
+		fp = _wfopen(L"parasettings.ini", L"w");
 		fwrite(data, 1, size, fp);
 		fclose(fp);
 		free(data);
@@ -136,16 +117,16 @@ void init_coresettings() {
 		fclose(fp);
 		ini_t* ini = ini_load(data, NULL);
 		free(data);
-		int num_vars = 18;
+		
 		int section =
 			ini_find_section(ini, "Settings", strlen("Settings"));
 		int vars_infile = ini_property_count(ini, section);
 
-		if (vars_infile != num_vars) {
+		if (vars_infile != NUM_CONFIGVARS) {
 			fclose(fp);
 		}
 		bool save = false;
-		for (int i = 0; i < num_vars; i++) {
+		for (int i = 0; i < NUM_CONFIGVARS; i++) {
 			int idx =
 				ini_find_property(ini, section, (char*)setting_defaults[i].name,
 					strlen(setting_defaults[i].name));
@@ -165,7 +146,7 @@ void init_coresettings() {
 			int size = ini_save(ini, NULL, 0); // Find the size needed
 			char* data = (char*)malloc(size);
 			size = ini_save(ini, data, size); // Actually save the file
-			fp = fopen("parasettings.ini", L"w");
+			fp = _wfopen(L"parasettings.ini", L"w");
 			fwrite(data, 1, size, fp);
 			fclose(fp);
 			free(data);
