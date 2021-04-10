@@ -1,6 +1,8 @@
 # pj64-parallelrdp
 
-Implementation of Themaister's Vulkan RDP emulator over OGL 3.3.
+Implementation of Themaister's Parallel-RDP simulator for PJ64.
+Vulkan is used as the GPU compute backend, and OpenGL 3.3 is 
+used for the blitting of image buffers captured from the backend.
 
 Made after a few days of messing around with GCC and some misc. sources.
 
