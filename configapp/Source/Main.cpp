@@ -97,7 +97,7 @@ settingkey setting_defaults[NUM_CONFIGVARS]
 	{"KEY_NATIVETEXTLOD", 0},
 	{"KEY_NATIVETEXTRECT", 1},
 	{"KEY_VSYNC", 1},
-	{"KEY_DOWNSCALE", 0}
+	{"KEY_DOWNSCALE", 1}
 };
 
 void save_coresettings()
@@ -377,7 +377,7 @@ BOOL CALLBACK DlgFunc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	switch (setting_defaults[KEY_UPSCALING].val)
 	{
-	case 0:
+	case 1:
 		SendDlgItemMessage(hWnd, ComboUpscaler, CB_SETCURSEL, 0, 0);
 		break;
 	case 2:
@@ -608,7 +608,7 @@ BOOL CALLBACK DlgFunc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		{
 		case ButtonRun:
 		{
-			int lut[4] = { 0,2,4,8 };
+			int lut[4] = { 1,2,4,8 };
 
 			int ups = SendDlgItemMessage(hWnd, ComboUpscaler, CB_GETCURSEL, 0, 0);
 			setting_defaults[KEY_UPSCALING].val = lut[ups];

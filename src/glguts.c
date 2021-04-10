@@ -30,6 +30,9 @@ static GLuint texture;
 int32_t tex_width;
 int32_t tex_height;
 
+int display_width=640;
+int display_height=480;
+
 #define MSG_BUFFER_LEN 256
 
 void msg_error(const char * err, ...)
@@ -264,11 +267,12 @@ void gl_screen_render()
     int32_t vp_y = statusrect.bottom;
 
 
-
+    display_width = 640 * vk_rescaling;
+    display_height = 480 * vk_rescaling;
 
     if(window_integerscale)
     {
-    float aspect = tex_width / tex_height;
+    float aspect = display_width / display_height;
     int width = win_width;
     int height = (int)roundf(width / aspect);
     if (height > win_height)
@@ -282,17 +286,17 @@ void gl_screen_render()
     }
     else
     {
-    int32_t hw =  tex_height * win_width;
-    int32_t wh = tex_width * win_height;
+    int32_t hw =  display_height * win_width;
+    int32_t wh = display_width * win_height;
 
     // add letterboxes or pillarboxes if the window has a different aspect ratio
     // than the current display mode
     if (hw > wh) {
-        int32_t w_max = wh / tex_height;
+        int32_t w_max = wh / display_height;
         vp_x += (win_width - w_max) / 2;
         win_width = w_max;
     } else if (hw < wh) {
-        int32_t h_max = hw / tex_width;
+        int32_t h_max = hw / display_width;
         vp_y += (win_height - h_max) / 2;
         win_height = h_max;
     }
