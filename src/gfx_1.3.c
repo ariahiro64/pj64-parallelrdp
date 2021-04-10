@@ -77,8 +77,11 @@ typedef struct settingkey {
 #define KEY_VIDITHER 13 
 #define KEY_NATIVETEXTLOD 14
 #define KEY_NATIVETEXTRECT 15
+#define KEY_VSYNC 16
+#define KEY_DOWNSCALING 17
 
-struct settingkey setting_defaults[16]=
+
+struct settingkey setting_defaults[18]=
 {
 	{"KEY_FULLSCREEN", 0},
 	{"KEY_UPSCALING", 0},
@@ -95,7 +98,9 @@ struct settingkey setting_defaults[16]=
 	{"KEY_VIBILERP", 1},
 	{"KEY_VIDITHER", 1},
 	{"KEY_NATIVETEXTLOD", 0},
-	{"KEY_NATIVETEXTRECT", 1}
+	{"KEY_NATIVETEXTRECT", 1},
+    {"KEY_VSYNC", 1},
+	{"KEY_DOWNSCALE", 0}
 };
 
 void init_coresettings() {
@@ -106,7 +111,7 @@ void init_coresettings() {
 		ini_t* ini = ini_create(NULL);
 		int section =
 			ini_section_add(ini, "Settings", strlen("Settings"));
-		for (int i = 0; i < 16; i++) {
+		for (int i = 0; i < 18; i++) {
 			char snum[10];
 			int num = setting_defaults[i].val;
 			itoa(num, snum, 10);
@@ -131,7 +136,7 @@ void init_coresettings() {
 		fclose(fp);
 		ini_t* ini = ini_load(data, NULL);
 		free(data);
-		int num_vars = 16;
+		int num_vars = 18;
 		int section =
 			ini_find_section(ini, "Settings", strlen("Settings"));
 		int vars_infile = ini_property_count(ini, section);
@@ -286,6 +291,9 @@ EXPORT void CALL RomOpen(void)
     vk_vi_scale=setting_defaults[KEY_VIBILERP].val;
     vk_dither_filter=setting_defaults[KEY_VIDITHER].val;
     vk_interlacing=setting_defaults[KEY_DEINTERLACE].val;
+    vk_interlacing=setting_defaults[KEY_DEINTERLACE].val;
+	vk_downscaling_steps=setting_defaults[KEY_DOWNSCALING].val;
+	window_vsync=setting_defaults[KEY_VSYNC].val;
     vk_init();
 }
 

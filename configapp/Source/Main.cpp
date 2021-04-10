@@ -96,7 +96,7 @@ settingkey setting_defaults[18]
 	{"KEY_NATIVETEXTLOD", 0},
 	{"KEY_NATIVETEXTRECT", 1},
 	{"KEY_VSYNC", 1},
-	{"KEY_DOWNSCALING", 0}
+	{"KEY_DOWNSCALE", 0}
 };
 
 void save_coresettings()
@@ -402,6 +402,7 @@ BOOL CALLBACK DlgFunc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	SendDlgItemMessage(hWnd, VDEDITHER, BM_SETCHECK, setting_defaults[KEY_VIDITHER].val, 0);
 	SendDlgItemMessage(hWnd, NATIVETEXLOD, BM_SETCHECK, setting_defaults[KEY_NATIVETEXTLOD].val, 0);
 	SendDlgItemMessage(hWnd, NATIVETEXRECT, BM_SETCHECK, setting_defaults[KEY_NATIVETEXTRECT].val, 0);
+	SendDlgItemMessage(hWnd, CheckVerticalSync, BM_SETCHECK, setting_defaults[KEY_VSYNC].val, 0);
 
 	break;
 
