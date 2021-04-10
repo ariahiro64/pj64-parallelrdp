@@ -310,7 +310,7 @@ OBJDIRS = $(dir $(OBJECTS))
 $(shell $(MKDIR) $(OBJDIRS))
 
 # build targets
-TARGET = mupen64plus-video-parallel$(POSTFIX).$(SO_EXTENSION)
+TARGET = pj64-parallelrdp$(POSTFIX).$(SO_EXTENSION)
 
 targets:
 	@echo "Mupen64plus-video-parallel N64 Graphics plugin makefile. "
