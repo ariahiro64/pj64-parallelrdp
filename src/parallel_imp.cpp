@@ -191,8 +191,6 @@ void vk_process_commands()
 					frontend->wait_for_timeline(frontend->signal_timeline());
 				*gfx.MI_INTR_REG |= DP_INTERRUPT;
 				gfx.CheckInterrupts();
-
-				vk_rasterize();
 			}
 
 			cmd_cur += cmd_length;
