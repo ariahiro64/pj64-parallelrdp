@@ -84,7 +84,7 @@ struct settingkey setting_defaults[NUM_CONFIGVARS]=
 	{"KEY_NATIVETEXTRECT", 1},
     {"KEY_VSYNC", 1},
 	{"KEY_DOWNSCALE", 1},
-	{"KEY_WIDESCREEEN", 0}
+	{"KEY_WIDESCREEN", 0}
 };
 
 void init_coresettings() {
@@ -123,10 +123,6 @@ void init_coresettings() {
 		int section =
 			ini_find_section(ini, "Settings", strlen("Settings"));
 		int vars_infile = ini_property_count(ini, section);
-
-		if (vars_infile != NUM_CONFIGVARS) {
-			fclose(fp);
-		}
 		bool save = false;
 		for (int i = 0; i < NUM_CONFIGVARS; i++) {
 			int idx =
