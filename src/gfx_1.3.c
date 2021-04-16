@@ -229,6 +229,17 @@ EXPORT BOOL CALL InitiateGFX(GFX_INFO Gfx_Info)
     return TRUE;
 }
 
+EXPORT void CALL DllConfig(HWND hParent)
+{
+	STARTUPINFO si = {0};
+	PROCESS_INFORMATION pi = {0};
+	HANDLE hThread;
+	si.cb = sizeof(STARTUPINFO);
+	CreateProcess(NULL, "parasettings.exe", NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi);
+	ResumeThread(pi.hThread);
+	CloseHandle(pi.hProcess);
+}
+
 EXPORT void CALL CloseDLL(void)
 {
 }
