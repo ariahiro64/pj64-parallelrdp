@@ -122,7 +122,7 @@ void save_coresettings()
 	if (vars_infile != NUM_CONFIGVARS) {
 		fclose(fp);
 	}
-	for (int i = 0; i < NUM_CONFIGVARS-1; i++) {
+	for (int i = 0; i < NUM_CONFIGVARS; i++) {
 		char snum[10];
 		int num = setting_defaults[i].val;
 		itoa(num, snum, 10);
@@ -180,7 +180,7 @@ void init_coresettings() {
 			fclose(fp);
 		}
 		bool save = false;
-		for (int i = 0; i < NUM_CONFIGVARS-1; i++) {
+		for (int i = 0; i < NUM_CONFIGVARS; i++) {
 			int idx =
 				ini_find_property(ini, section, (char*)setting_defaults[i].name,
 					strlen(setting_defaults[i].name));
@@ -422,6 +422,7 @@ BOOL CALLBACK DlgFunc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 			if (!strcmp(listItemAspect.c_str(), "16:10"))
 			{
+				SendDlgItemMessage(hWnd, CheckWidescreen, BM_SETCHECK, 1, 0);
 				if (itemIndexResolution != currentIndexResolution)		// If we have a selection change in resolution
 				{
 					currentIndexResolution = SendDlgItemMessage(hWnd, ComboResolution, CB_GETCURSEL, 0, 0);
@@ -469,6 +470,7 @@ BOOL CALLBACK DlgFunc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 			if (!strcmp(listItemAspect.c_str(), "16:9"))
 			{
+				SendDlgItemMessage(hWnd, CheckWidescreen, BM_SETCHECK, 1, 0);
 				if (itemIndexResolution != currentIndexResolution)		// If we have a selection change in resolution
 				{
 					currentIndexResolution = SendDlgItemMessage(hWnd, ComboResolution, CB_GETCURSEL, 0, 0);
