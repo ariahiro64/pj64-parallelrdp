@@ -61,7 +61,8 @@ typedef struct settingkey {
 #define KEY_NATIVETEXTRECT 15
 #define KEY_VSYNC 16
 #define KEY_DOWNSCALING 17
-#define NUM_CONFIGVARS 18
+#define KEY_WIDESCREEN 18
+#define NUM_CONFIGVARS 19
 
 struct settingkey setting_defaults[NUM_CONFIGVARS]=
 {
@@ -81,8 +82,9 @@ struct settingkey setting_defaults[NUM_CONFIGVARS]=
 	{"KEY_VIDITHER", 1},
 	{"KEY_NATIVETEXTLOD", 0},
 	{"KEY_NATIVETEXTRECT", 1},
-        {"KEY_VSYNC", 1},
-	{"KEY_DOWNSCALE", 1}
+    {"KEY_VSYNC", 1},
+	{"KEY_DOWNSCALE", 1},
+	{"KEY_WIDESCREEEN", 0}
 };
 
 void init_coresettings() {
@@ -275,6 +277,7 @@ EXPORT void CALL RomOpen(void)
     vk_interlacing=setting_defaults[KEY_DEINTERLACE].val;
 	vk_downscaling_steps=setting_defaults[KEY_DOWNSCALING].val;
 	window_vsync=setting_defaults[KEY_VSYNC].val;
+	window_widescreen=setting_defaults[KEY_WIDESCREEN].val;
     vk_init();
 }
 

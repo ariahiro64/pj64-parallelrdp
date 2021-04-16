@@ -77,7 +77,8 @@ struct Settings {
 #define KEY_NATIVETEXTRECT 15
 #define KEY_VSYNC 16
 #define KEY_DOWNSCALING 17
-#define NUM_CONFIGVARS 18
+#define KEY_WIDESCREEN 18
+#define NUM_CONFIGVARS 19
 settingkey setting_defaults[NUM_CONFIGVARS]
 {
 	{"KEY_FULLSCREEN", 0},
@@ -97,7 +98,8 @@ settingkey setting_defaults[NUM_CONFIGVARS]
 	{"KEY_NATIVETEXTLOD", 0},
 	{"KEY_NATIVETEXTRECT", 1},
 	{"KEY_VSYNC", 1},
-	{"KEY_DOWNSCALE", 1}
+	{"KEY_DOWNSCALE", 1},
+	{"KEY_WIDESCREEN", 0},
 };
 
 void save_coresettings()
@@ -404,6 +406,7 @@ BOOL CALLBACK DlgFunc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	SendDlgItemMessage(hWnd, NATIVETEXLOD, BM_SETCHECK, setting_defaults[KEY_NATIVETEXTLOD].val, 0);
 	SendDlgItemMessage(hWnd, NATIVETEXRECT, BM_SETCHECK, setting_defaults[KEY_NATIVETEXTRECT].val, 0);
 	SendDlgItemMessage(hWnd, CheckVerticalSync, BM_SETCHECK, setting_defaults[KEY_VSYNC].val, 0);
+	SendDlgItemMessage(hWnd, CheckWidescreen, BM_SETCHECK, setting_defaults[KEY_WIDESCREEN].val, 0);
 
 	break;
 
@@ -630,6 +633,7 @@ BOOL CALLBACK DlgFunc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			setting_defaults[KEY_FULLSCREEN].val = SendDlgItemMessage(hWnd, CheckFullscreen, BM_GETCHECK, 0, 0);
 			setting_defaults[KEY_VSYNC].val = SendDlgItemMessage(hWnd, CheckVerticalSync, BM_GETCHECK, 0, 0);
 			setting_defaults[KEY_DOWNSCALING].val = SendDlgItemMessage(hWnd, ComboUpscaler2, CB_GETCURSEL, 0, 0);
+			setting_defaults[KEY_WIDESCREEN].val = SendDlgItemMessage(hWnd, CheckWidescreen, BM_GETCHECK, 0, 0);
 			save_coresettings();
 			EndDialog(hWnd, TRUE);
 		} break;

@@ -17,6 +17,7 @@ int32_t window_height;
 int32_t window_fullscreen;
 bool window_integerscale;
 bool window_vsync;
+bool window_widescreen;
 
 #include "gl_core_3_3.c"
 #define SHADER_HEADER "#version 330 core\n"
@@ -269,6 +270,8 @@ void gl_screen_render()
 
     display_width = 640 * vk_rescaling;
     display_height = 480 * vk_rescaling;
+    if(window_widescreen)
+    display_height = (480 * vk_rescaling)* 3 / 4;
 
     if(window_integerscale)
     {
