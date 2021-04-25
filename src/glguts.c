@@ -33,6 +33,7 @@ int32_t tex_height;
 
 int display_width=640;
 int display_height=480;
+static bool m_fullscreen;
 
 #define MSG_BUFFER_LEN 256
 
@@ -329,27 +330,20 @@ void gl_screen_close(void)
 void screen_init()
 {
     /* Get the core Video Extension function pointers from the library handle */
-     if (!fullscreen) {
+     if (!m_fullscreen) {
         LONG style = GetWindowLong(gfx.hWnd, GWL_STYLE);
-        style |= WS_SIZEBOX | WS_MAXIMIZEBOX;
-        SetWindowLong(gfx.hWnd, GWL_STYLE, style);
 
-        BOOL zoomed = IsZoomed(gfx.hWnd);
+        if ((style & (WS_SIZEBOX | WS_MAXIMIZEBOX)) == 0) {
+            style |= WS_SIZEBOX | WS_MAXIMIZEBOX;
+            SetWindowLong(gfx.hWnd, GWL_STYLE, style);
 
-        if (zoomed) {
-            ShowWindow(gfx.hWnd, SW_RESTORE);
-        }
-
-        // Fix client size after changing the window style, otherwise the PJ64
-        // menu will be displayed incorrectly.
-        // For some reason, this needs to be called twice, probably because the
-        // style set above isn't applied immediately.
-        for (int i = 0; i < 2; i++) {
-            win32_client_resize(gfx.hWnd, gfx.hStatusBar, window_width, window_height);
-        }
-
-        if (zoomed) {
-            ShowWindow(gfx.hWnd, SW_MAXIMIZE);
+            // Fix client size after changing the window style, otherwise the PJ64
+            // menu will be displayed incorrectly.
+            // For some reason, this needs to be called twice, probably because the
+            // style set above isn't applied immediately.
+            for (int i = 0; i < 2; i++) {
+                win32_client_resize(gfx.hWnd, gfx.hStatusBar, window_width, window_height);
+            }
         }
     }
 
@@ -468,13 +462,15 @@ void screen_swap(bool blank)
 
 }
 
-void screen_set_fullscreen(bool _fullscreen)
+void screen_toggle_fullscreen()
 {
     static HMENU old_menu;
     static LONG old_style;
     static WINDOWPLACEMENT old_pos;
 
-    if (_fullscreen) {
+    m_fullscreen = !m_fullscreen;
+
+    if (m_fullscreen) {
         // hide curser
         ShowCursor(FALSE);
 
@@ -499,11 +495,13 @@ void screen_set_fullscreen(bool _fullscreen)
         // disable all styles to get a borderless window and save it to restore
         // it later
         old_style = GetWindowLong(gfx.hWnd, GWL_STYLE);
-        SetWindowLong(gfx.hWnd, GWL_STYLE, WS_VISIBLE);
+        LONG style = WS_VISIBLE;
+        SetWindowLong(gfx.hWnd, GWL_STYLE, style);
 
         // resize window so it covers the entire virtual screen
         SetWindowPos(gfx.hWnd, HWND_TOP, 0, 0, vs_width, vs_height, SWP_SHOWWINDOW);
-    } else {
+    }
+    else {
         // restore cursor
         ShowCursor(TRUE);
 
@@ -524,17 +522,6 @@ void screen_set_fullscreen(bool _fullscreen)
         // restore window size and position
         SetWindowPlacement(gfx.hWnd, &old_pos);
     }
-    fullscreen = _fullscreen;
-}
-
-bool screen_get_fullscreen()
-{
-    return false;
-}
-
-void screen_toggle_fullscreen()
-{
-    screen_set_fullscreen(!screen_get_fullscreen());
 }
 
 void screen_close(void)
