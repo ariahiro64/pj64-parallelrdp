@@ -9,3 +9,5 @@ Made after a few days of messing around with GCC and some misc. sources.
 To compile using MSYS2 
 1) Clone/fork the Github repo only.
 2) use "make all platform=win"
+
+For best results: use cxd4's RSP plugin. Zilmar's RSP has several LLE GFX bugs.
