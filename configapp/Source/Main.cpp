@@ -271,10 +271,10 @@ BOOL CALLBACK DlgFunc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		SetWindowText(hWnd, (LPCSTR)"Parallel-RDP config");
 
-		if (setting_defaults[KEY_SCREEN_WIDTH].val == 0 || setting_defaults[KEY_SCREEN_HEIGHT].val == 0)
-		{
-			GetDesktopResolution(setting_defaults[KEY_SCREEN_WIDTH].val, setting_defaults[KEY_SCREEN_HEIGHT].val);
-		}
+	//	if (setting_defaults[KEY_SCREEN_WIDTH].val == 0 || setting_defaults[KEY_SCREEN_HEIGHT].val == 0)
+		//{
+		//	GetDesktopResolution(setting_defaults[KEY_SCREEN_WIDTH].val, setting_defaults[KEY_SCREEN_HEIGHT].val);
+		//}
 
 		char s[500];
 		int i = 0;
@@ -286,38 +286,6 @@ BOOL CALLBACK DlgFunc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			BOOL h = EnumDisplaySettings(NULL, i++, &d);
 			if (!h || nRes > MAXNUMRES)
 				break;
-
-
-
-
-			if ((setting_defaults[KEY_SCREEN_WIDTH].val * 9) / 16 == setting_defaults[KEY_SCREEN_HEIGHT].val)
-			{
-				selectedAspect = "16:9";
-				if ((d.dmPelsWidth * 9) / 16 != d.dmPelsHeight)
-					continue;
-			}
-
-			else if ((setting_defaults[KEY_SCREEN_WIDTH].val * 10) / 16 == setting_defaults[KEY_SCREEN_HEIGHT].val)
-			{
-				selectedAspect = "16:10";
-				if ((d.dmPelsWidth * 10) / 16 != d.dmPelsHeight)
-					continue;
-			}
-
-			else if ((setting_defaults[KEY_SCREEN_WIDTH].val * 3) / 4 == setting_defaults[KEY_SCREEN_HEIGHT].val)
-			{
-				selectedAspect = "4:3";
-				if ((d.dmPelsWidth * 3) / 4 != d.dmPelsHeight)
-					continue;
-			}
-
-			else
-			{
-				selectedAspect = "Others";
-				if (!((d.dmPelsWidth * 9) / 16 != d.dmPelsHeight && (d.dmPelsWidth * 10) / 16 != d.dmPelsHeight && (d.dmPelsWidth * 3) / 4 != d.dmPelsHeight))
-					continue;
-			}
-
 			if (d.dmBitsPerPel != 32)
 				continue;
 
@@ -331,11 +299,6 @@ BOOL CALLBACK DlgFunc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				SendDlgItemMessage(hWnd, ComboResolution, CB_ADDSTRING, 0, (LPARAM)s);
 			}
 		}
-
-		SendDlgItemMessage(hWnd, ComboAspect, CB_ADDSTRING, 0, (LPARAM)"16:9");
-		SendDlgItemMessage(hWnd, ComboAspect, CB_ADDSTRING, 0, (LPARAM)"16:10");
-		SendDlgItemMessage(hWnd, ComboAspect, CB_ADDSTRING, 0, (LPARAM)"4:3");
-		SendDlgItemMessage(hWnd, ComboAspect, CB_ADDSTRING, 0, (LPARAM)"Others");
 
 
 
@@ -379,6 +342,7 @@ BOOL CALLBACK DlgFunc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	switch (setting_defaults[KEY_UPSCALING].val)
 	{
+	case 0:
 	case 1:
 		SendDlgItemMessage(hWnd, ComboUpscaler, CB_SETCURSEL, 0, 0);
 		break;
@@ -412,203 +376,6 @@ BOOL CALLBACK DlgFunc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 
 	case WM_COMMAND:
-
-		if (HIWORD(wParam) == CBN_SELCHANGE)
-		{
-			int itemIndexAspect = SendDlgItemMessage(hWnd, ComboAspect, CB_GETCURSEL, 0, 0);
-			SendDlgItemMessage(hWnd, ComboAspect, CB_GETLBTEXT, (WPARAM)itemIndexAspect, (LPARAM)listItemAspect.c_str());
-
-			int itemIndexResolution = SendDlgItemMessage(hWnd, ComboResolution, CB_GETCURSEL, 0, 0);
-
-			if (!strcmp(listItemAspect.c_str(), "16:10"))
-			{
-				SendDlgItemMessage(hWnd, CheckWidescreen, BM_SETCHECK, 1, 0);
-				if (itemIndexResolution != currentIndexResolution)		// If we have a selection change in resolution
-				{
-					currentIndexResolution = SendDlgItemMessage(hWnd, ComboResolution, CB_GETCURSEL, 0, 0);
-				}
-
-				else if (strcmp(currentIndexAspect.c_str(), "16:10"))
-				{
-					currentIndexAspect = listItemAspect.c_str();
-
-					SendDlgItemMessage(hWnd, ComboResolution, CB_RESETCONTENT, 0, 0);
-					memset(&ress, 0, sizeof(ress));	//	Clear the width and height data in struct
-					nRes = 0;
-					char s[500];
-					int i = 0;
-
-					DEVMODE d;
-					EnumDisplaySettings(NULL, 0, &d);
-					while (1)
-					{
-						BOOL h = EnumDisplaySettings(NULL, i++, &d);
-						if (!h || nRes > MAXNUMRES)
-							break;
-
-						if ((d.dmPelsWidth * 10) / 16 != d.dmPelsHeight)
-							continue;
-
-						if (d.dmBitsPerPel != 32)
-							continue;
-
-						if (!nRes || ress[nRes - 1].w != d.dmPelsWidth || ress[nRes - 1].h != d.dmPelsHeight)
-						{
-							ress[nRes].w = d.dmPelsWidth;
-							ress[nRes].h = d.dmPelsHeight;
-
-							nRes++;
-							_snprintf_s(s, 500, "%d X %d", d.dmPelsWidth, d.dmPelsHeight);
-							SendDlgItemMessage(hWnd, ComboResolution, CB_ADDSTRING, 0, (LPARAM)s);
-						}
-					}
-
-					SendDlgItemMessage(hWnd, ComboResolution, CB_SETCURSEL, (nRes - 1), 0);
-					currentIndexResolution = SendDlgItemMessage(hWnd, ComboResolution, CB_GETCURSEL, 0, 0);
-				}
-			}
-
-			if (!strcmp(listItemAspect.c_str(), "16:9"))
-			{
-				SendDlgItemMessage(hWnd, CheckWidescreen, BM_SETCHECK, 1, 0);
-				if (itemIndexResolution != currentIndexResolution)		// If we have a selection change in resolution
-				{
-					currentIndexResolution = SendDlgItemMessage(hWnd, ComboResolution, CB_GETCURSEL, 0, 0);
-				}
-
-				else if (strcmp(currentIndexAspect.c_str(), "16:9"))
-				{
-					currentIndexAspect = listItemAspect.c_str();
-
-					SendDlgItemMessage(hWnd, ComboResolution, CB_RESETCONTENT, 0, 0);
-					memset(&ress, 0, sizeof(ress));	//	Clear the width and height data in struct
-					nRes = 0;
-					char s[500];
-					int i = 0;
-
-					DEVMODE d;
-					EnumDisplaySettings(NULL, 0, &d);
-					while (1)
-					{
-						BOOL h = EnumDisplaySettings(NULL, i++, &d);
-						if (!h || nRes > MAXNUMRES)
-							break;
-
-						if ((d.dmPelsWidth * 9) / 16 != d.dmPelsHeight)
-							continue;
-
-						if (d.dmBitsPerPel != 32)
-							continue;
-
-						if (!nRes || ress[nRes - 1].w != d.dmPelsWidth || ress[nRes - 1].h != d.dmPelsHeight)
-						{
-							ress[nRes].w = d.dmPelsWidth;
-							ress[nRes].h = d.dmPelsHeight;
-
-							nRes++;
-							_snprintf_s(s, 500, "%d X %d", d.dmPelsWidth, d.dmPelsHeight);
-							SendDlgItemMessage(hWnd, ComboResolution, CB_ADDSTRING, 0, (LPARAM)s);
-						}
-					}
-
-					SendDlgItemMessage(hWnd, ComboResolution, CB_SETCURSEL, (nRes - 1), 0);
-					currentIndexResolution = SendDlgItemMessage(hWnd, ComboResolution, CB_GETCURSEL, 0, 0);
-				}
-			}
-			if (!strcmp(listItemAspect.c_str(), "4:3"))
-			{
-				if (itemIndexResolution != currentIndexResolution)		// If we have a selection change in resolution
-				{
-					currentIndexResolution = SendDlgItemMessage(hWnd, ComboResolution, CB_GETCURSEL, 0, 0);
-				}
-
-				else if (strcmp(currentIndexAspect.c_str(), "4:3"))
-				{
-					currentIndexAspect = listItemAspect.c_str();
-
-					SendDlgItemMessage(hWnd, ComboResolution, CB_RESETCONTENT, 0, 0);
-					memset(&ress, 0, sizeof(ress));	//	Clear the width and height data in struct
-					nRes = 0;
-					char s[500];
-					int i = 0;
-
-					DEVMODE d;
-					EnumDisplaySettings(NULL, 0, &d);
-					while (1)
-					{
-						BOOL h = EnumDisplaySettings(NULL, i++, &d);
-						if (!h || nRes > MAXNUMRES)
-							break;
-
-						if ((d.dmPelsWidth * 3) / 4 != d.dmPelsHeight)
-							continue;
-
-						if (d.dmBitsPerPel != 32)
-							continue;
-
-						if (!nRes || ress[nRes - 1].w != d.dmPelsWidth || ress[nRes - 1].h != d.dmPelsHeight)
-						{
-							ress[nRes].w = d.dmPelsWidth;
-							ress[nRes].h = d.dmPelsHeight;
-
-							nRes++;
-							_snprintf_s(s, 500, "%d X %d", d.dmPelsWidth, d.dmPelsHeight);
-							SendDlgItemMessage(hWnd, ComboResolution, CB_ADDSTRING, 0, (LPARAM)s);
-						}
-					}
-
-					SendDlgItemMessage(hWnd, ComboResolution, CB_SETCURSEL, (nRes - 1), 0);
-					currentIndexResolution = SendDlgItemMessage(hWnd, ComboResolution, CB_GETCURSEL, 0, 0);
-				}
-			}
-
-			if (!strcmp(listItemAspect.c_str(), "Others"))
-			{
-				if (itemIndexResolution != currentIndexResolution)		// If we have a selection change in resolution
-				{
-					currentIndexResolution = SendDlgItemMessage(hWnd, ComboResolution, CB_GETCURSEL, 0, 0);
-				}
-
-				else if (strcmp(currentIndexAspect.c_str(), "Others"))
-				{
-					currentIndexAspect = listItemAspect.c_str();
-
-					SendDlgItemMessage(hWnd, ComboResolution, CB_RESETCONTENT, 0, 0);
-					memset(&ress, 0, sizeof(ress));	//	Clear the width and height data in struct
-					nRes = 0;
-					char s[500];
-					int i = 0;
-
-					DEVMODE d;
-					EnumDisplaySettings(NULL, 0, &d);
-					while (1)
-					{
-						BOOL h = EnumDisplaySettings(NULL, i++, &d);
-						if (!h || nRes > MAXNUMRES)
-							break;
-
-						if (!((d.dmPelsWidth * 9) / 16 != d.dmPelsHeight && (d.dmPelsWidth * 10) / 16 != d.dmPelsHeight && (d.dmPelsWidth * 3) / 4 != d.dmPelsHeight))
-							continue;
-
-						if (d.dmBitsPerPel != 32)
-							continue;
-
-						if (!nRes || ress[nRes - 1].w != d.dmPelsWidth || ress[nRes - 1].h != d.dmPelsHeight)
-						{
-							ress[nRes].w = d.dmPelsWidth;
-							ress[nRes].h = d.dmPelsHeight;
-
-							nRes++;
-							_snprintf_s(s, 500, "%d X %d", d.dmPelsWidth, d.dmPelsHeight);
-							SendDlgItemMessage(hWnd, ComboResolution, CB_ADDSTRING, 0, (LPARAM)s);
-						}
-					}
-
-					SendDlgItemMessage(hWnd, ComboResolution, CB_SETCURSEL, (nRes - 1), 0);
-					currentIndexResolution = SendDlgItemMessage(hWnd, ComboResolution, CB_GETCURSEL, 0, 0);
-				}
-			}
-		}
 		switch (LOWORD(wParam))
 		{
 		case ButtonRun:
