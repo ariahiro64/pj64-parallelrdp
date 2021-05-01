@@ -5,7 +5,9 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <commctrl.h>
 
+static HWND statusbar = NULL;
 static HDC dc;
 static HGLRC glrc;
 static HGLRC glrc_core;
@@ -30,9 +32,6 @@ static GLuint texture;
 
 int32_t tex_width;
 int32_t tex_height;
-
-int display_width=640;
-int display_height=480;
 static bool m_fullscreen;
 
 #define MSG_BUFFER_LEN 256
@@ -256,40 +255,38 @@ void gl_screen_render()
     RECT statusrect;
     SetRectEmpty(&statusrect);
 
-    if (gfx.hStatusBar) {
-        GetClientRect(gfx.hStatusBar, &statusrect);
+    if (statusbar && GetClientRect(statusbar, &statusrect)) {
         rect.bottom -= statusrect.bottom;
     }
 
     int32_t win_width = rect.right - rect.left;
     int32_t win_height = rect.bottom - rect.top;
 
-    // default to bottom left corner of the window above the status bar
-    int32_t vp_x = 0;
-    int32_t vp_y = statusrect.bottom;
-
-
-    display_width = 640 * vk_rescaling;
-    display_height = 480 * vk_rescaling;
-    if(window_widescreen)
-    display_height = (480 * vk_rescaling)* 3 / 4;
-
     if(window_integerscale)
     {
-    float aspect = display_width / display_height;
-    int width = win_width;
-    int height = (int)roundf(width / aspect);
-    if (height > win_height)
-    {
-        height = win_height;
-        width = (int)roundf(height * aspect);
-    }
-    vp_x = (win_width / 2) - (width / 2);
-    vp_y += (window_height / 2) - (height / 2);
-    glViewport(vp_x, win_height-(vp_y+height), width, height);
+    unsigned width = win_width;
+	unsigned height = win_height;
+	int pad_x = 0, pad_y = 0;
+	unsigned base_h = 480;
+	unsigned base_w = 640;
+	if (width >= base_w && height >= base_h)
+	{
+		unsigned scale = min(width / base_w, height / base_h);
+		pad_x = width - base_w * scale;
+		pad_y = height - base_h * scale;
+	}
+	width -= pad_x;
+	height -= pad_y;
+	glViewport(pad_x / 2, pad_y / 2, width, height);
     }
     else
     {
+    int32_t vp_x = 0;
+    int32_t vp_y = statusrect.bottom;
+    int display_width = 640 * vk_rescaling;
+    int display_height = 480 * vk_rescaling;
+    if(window_widescreen)
+    display_height = (480 * vk_rescaling)* 3 / 4;
     int32_t hw =  display_height * win_width;
     int32_t wh = display_width * win_height;
 
@@ -329,6 +326,16 @@ void gl_screen_close(void)
 }
 void screen_init()
 {
+    if (gfx.hStatusBar)statusbar = gfx.hStatusBar;
+    if(!statusbar)
+    {
+        statusbar = FindWindowExA(gfx.hWnd, NULL, STATUSCLASSNAME, NULL);
+        if (statusbar == NULL)
+        {
+            statusbar = FindWindowExA(gfx.hWnd, NULL, "msctls_statusbar32", NULL);
+        }
+
+    }
     /* Get the core Video Extension function pointers from the library handle */
      if (!m_fullscreen) {
         LONG style = GetWindowLong(gfx.hWnd, GWL_STYLE);
@@ -342,7 +349,7 @@ void screen_init()
             // For some reason, this needs to be called twice, probably because the
             // style set above isn't applied immediately.
             for (int i = 0; i < 2; i++) {
-                win32_client_resize(gfx.hWnd, gfx.hStatusBar, window_width, window_height);
+                win32_client_resize(gfx.hWnd, statusbar, window_width, window_height);
             }
         }
     }
@@ -475,8 +482,8 @@ void screen_toggle_fullscreen()
         ShowCursor(FALSE);
 
         // hide status bar
-        if (gfx.hStatusBar) {
-            ShowWindow(gfx.hStatusBar, SW_HIDE);
+        if (statusbar) {
+            ShowWindow(statusbar, SW_HIDE);
         }
 
         // disable menu and save it to restore it later
@@ -506,8 +513,8 @@ void screen_toggle_fullscreen()
         ShowCursor(TRUE);
 
         // restore status bar
-        if (gfx.hStatusBar) {
-            ShowWindow(gfx.hStatusBar, SW_SHOW);
+        if (statusbar) {
+            ShowWindow(statusbar, SW_SHOW);
         }
 
         // restore menu
