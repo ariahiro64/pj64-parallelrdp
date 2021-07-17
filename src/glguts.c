@@ -25,14 +25,20 @@ bool window_widescreen;
 #define SHADER_HEADER "#version 330 core\n"
 #define TEX_FORMAT GL_RGBA
 #define TEX_TYPE GL_UNSIGNED_BYTE
+#define TEX_NUM 3
 
 static GLuint program;
 static GLuint vao;
-static GLuint texture;
+static GLuint buffer;
+static GLuint texture[TEX_NUM];
+static uint8_t *buffer_data;
+static uint32_t buffer_size = (640*8) * (480*8) * sizeof(uint32_t);
 
-int32_t tex_width;
-int32_t tex_height;
+int32_t tex_width[TEX_NUM];
+int32_t tex_height[TEX_NUM];
 static bool m_fullscreen;
+
+static int rotate_buffer;
 
 #define MSG_BUFFER_LEN 256
 
@@ -207,25 +213,27 @@ static GLuint gl_shader_link(GLuint vert, GLuint frag)
 
 bool screen_write(struct frame_buffer *fb)
 {
-    bool buffer_size_changed = tex_width != fb->width || tex_height != fb->height;
+    bool buffer_size_changed = tex_width[rotate_buffer] != fb->width || tex_height[rotate_buffer] != fb->height;
 
     // check if the framebuffer size has changed
     if (buffer_size_changed)
     {
-        tex_width = fb->width;
-        tex_height = fb->height;
+        tex_width[rotate_buffer] = fb->width;
+        tex_height[rotate_buffer] = fb->height;
         // set pitch for all unpacking operations
         glPixelStorei(GL_UNPACK_ROW_LENGTH, fb->pitch);
         // reallocate texture buffer on GPU
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, tex_width,
-                     tex_height, 0, TEX_FORMAT, TEX_TYPE, fb->pixels);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, tex_width[rotate_buffer],
+                     tex_height[rotate_buffer], 0, TEX_FORMAT, TEX_TYPE, fb->pixels);
     }
     else
     {
         // copy local buffer to GPU texture buffer
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, tex_width, tex_height,
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, tex_width[rotate_buffer], tex_height[rotate_buffer],
                         TEX_FORMAT, TEX_TYPE, fb->pixels);
     }
+
+    rotate_buffer = (rotate_buffer + 1) % TEX_NUM;
 
     return buffer_size_changed;
 }
@@ -264,45 +272,45 @@ void gl_screen_render()
 
     if(window_integerscale)
     {
-    unsigned width = win_width;
-	unsigned height = win_height;
-	int pad_x = 0, pad_y = 0;
-	unsigned base_h = 480;
-	unsigned base_w = 640;
-	if (width >= base_w && height >= base_h)
-	{
-		unsigned scale = min(width / base_w, height / base_h);
-		pad_x = width - base_w * scale;
-		pad_y = height - base_h * scale;
-	}
-	width -= pad_x;
-	height -= pad_y;
-	glViewport(pad_x / 2, pad_y / 2, width, height);
+        unsigned width = win_width;
+	    unsigned height = win_height;
+	    int pad_x = 0, pad_y = 0;
+	    unsigned base_h = 480;
+	    unsigned base_w = 640;
+	    if (width >= base_w && height >= base_h)
+	    {
+	    	unsigned scale = min(width / base_w, height / base_h);
+	    	pad_x = width - base_w * scale;
+	    	pad_y = height - base_h * scale;
+	    }
+	    width -= pad_x;
+	    height -= pad_y;
+	    glViewport(pad_x / 2, pad_y / 2, width, height);
     }
     else
     {
-    int32_t vp_x = 0;
-    int32_t vp_y = statusrect.bottom;
-    int display_width = 640 * vk_rescaling;
-    int display_height = 480 * vk_rescaling;
-    if(window_widescreen)
-    display_height = (480 * vk_rescaling)* 3 / 4;
-    int32_t hw =  display_height * win_width;
-    int32_t wh = display_width * win_height;
-
-    // add letterboxes or pillarboxes if the window has a different aspect ratio
-    // than the current display mode
-    if (hw > wh) {
-        int32_t w_max = wh / display_height;
-        vp_x += (win_width - w_max) / 2;
-        win_width = w_max;
-    } else if (hw < wh) {
-        int32_t h_max = hw / display_width;
-        vp_y += (win_height - h_max) / 2;
-        win_height = h_max;
-    }
-    // configure viewport
-    glViewport(vp_x, vp_y, win_width, win_height);
+        int32_t vp_x = 0;
+        int32_t vp_y = statusrect.bottom;
+        int display_width = 640 * vk_rescaling;
+        int display_height = 480 * vk_rescaling;
+        if(window_widescreen)
+        display_height = (480 * vk_rescaling)* 3 / 4;
+        int32_t hw =  display_height * win_width;
+        int32_t wh = display_width * win_height;
+    
+        // add letterboxes or pillarboxes if the window has a different aspect ratio
+        // than the current display mode
+        if (hw > wh) {
+            int32_t w_max = wh / display_height;
+            vp_x += (win_width - w_max) / 2;
+            win_width = w_max;
+        } else if (hw < wh) {
+            int32_t h_max = hw / display_width;
+            vp_y += (win_height - h_max) / 2;
+            win_height = h_max;
+        }
+        // configure viewport
+        glViewport(vp_x, vp_y, win_width, win_height);
     }
 
     
@@ -317,15 +325,18 @@ void gl_screen_clear(void)
 
 void gl_screen_close(void)
 {
-    tex_width = 0;
-    tex_height = 0;
-
-    glDeleteTextures(1, &texture);
+    glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+    glDeleteTextures(TEX_NUM, &texture[0]);
     glDeleteVertexArrays(1, &vao);
+    glDeleteBuffers(1, &buffer);
     glDeleteProgram(program);
 }
 void screen_init()
 {
+    memset(tex_width, 0, sizeof(int32_t) * TEX_NUM);
+    memset(tex_height, 0, sizeof(int32_t) * TEX_NUM);
+    rotate_buffer = 0;
+
     if (gfx.hStatusBar)statusbar = gfx.hStatusBar;
     if(!statusbar)
     {
@@ -442,10 +453,18 @@ void screen_init()
     glBindVertexArray(vao);
 
     // prepare texture
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glGenTextures(TEX_NUM, &texture[0]);
+    for (int i = 0; i < TEX_NUM; ++i)
+    {
+        glBindTexture(GL_TEXTURE_2D, texture[i]);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    }
+
+    glGenBuffers(1, &buffer);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, buffer);
+    glBufferStorage(GL_PIXEL_UNPACK_BUFFER, buffer_size * TEX_NUM, 0, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+    buffer_data = glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, buffer_size * TEX_NUM, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 
     // check if there was an error when using any of the commands above
     gl_check_errors();
@@ -467,6 +486,11 @@ void screen_swap(bool blank)
 
    SwapBuffers(dc);
 
+}
+
+uint8_t* screen_get_texture_data()
+{
+    return buffer_data + (rotate_buffer * buffer_size);
 }
 
 void screen_toggle_fullscreen()

@@ -981,6 +981,9 @@ extern "C" {
 #define GL_TIME_ELAPSED 0x88BF
 #define GL_VERTEX_ATTRIB_ARRAY_DIVISOR 0x88FE
 
+#define GL_MAP_PERSISTENT_BIT 0x0040
+#define GL_MAP_COHERENT_BIT 0x0080
+
 extern void (CODEGEN_FUNCPTR *_ptrc_glBlendFunc)(GLenum sfactor, GLenum dfactor);
 #define glBlendFunc _ptrc_glBlendFunc
 extern void (CODEGEN_FUNCPTR *_ptrc_glClear)(GLbitfield mask);
@@ -1160,6 +1163,8 @@ extern void (CODEGEN_FUNCPTR *_ptrc_glBufferData)(GLenum target, GLsizeiptr size
 #define glBufferData _ptrc_glBufferData
 extern void (CODEGEN_FUNCPTR *_ptrc_glBufferSubData)(GLenum target, GLintptr offset, GLsizeiptr size, const void * data);
 #define glBufferSubData _ptrc_glBufferSubData
+extern void (CODEGEN_FUNCPTR *_ptrc_glBufferStorage)(GLenum target, GLsizeiptr size, const void * data, GLbitfield flags);
+#define glBufferStorage _ptrc_glBufferStorage
 extern void (CODEGEN_FUNCPTR *_ptrc_glDeleteBuffers)(GLsizei n, const GLuint * buffers);
 #define glDeleteBuffers _ptrc_glDeleteBuffers
 extern void (CODEGEN_FUNCPTR *_ptrc_glDeleteQueries)(GLsizei n, const GLuint * ids);

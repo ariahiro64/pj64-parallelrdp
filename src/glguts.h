@@ -33,6 +33,7 @@ extern "C"
     void screen_toggle_fullscreen(void);
     void screen_close(void);
     void screen_swap(bool blank);
+    uint8_t* screen_get_texture_data();    
 
     extern int32_t window_width;
     extern int32_t window_height;

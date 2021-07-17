@@ -3,7 +3,6 @@
 #include "parallel_imp.h"
 #include <memory>
 #include <vector>
-
 #include "rdp_device.hpp"
 #include "context.hpp"
 #include "device.hpp"
@@ -31,6 +30,7 @@ bool vk_native_tex_rect;
 bool vk_synchronous, vk_divot_filter, vk_gamma_dither;
 bool vk_vi_aa, vk_vi_scale, vk_dither_filter;
 bool vk_interlacing;
+bool skip_swap_clear;
 
 static const unsigned cmd_len_lut[64] = {
 	1, 1, 1, 1, 1, 1, 1, 1, 4, 6, 12, 14, 12, 14, 20, 22,
@@ -39,7 +39,7 @@ static const unsigned cmd_len_lut[64] = {
 	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  1,  1,  1,  1,  1,
 };
 
-void vk_blit(std::vector<RDP::RGBA> &colors, unsigned &width, unsigned &height)
+void vk_blit(unsigned &width, unsigned &height)
 {
 	if (running)
 	{
@@ -63,16 +63,15 @@ void vk_blit(std::vector<RDP::RGBA> &colors, unsigned &width, unsigned &height)
 		{
 			width = 0;
 			height = 0;
-			colors.clear();
 			return;
 		}
 
 		width = scanout.width;
 		height = scanout.height;
-		colors.resize(width * height);
 
 		scanout.fence->wait();
-		memcpy(colors.data(), device->map_host_buffer(*scanout.buffer, Vulkan::MEMORY_ACCESS_READ_BIT),
+		uint8_t* color_data = screen_get_texture_data();
+		memcpy(color_data, device->map_host_buffer(*scanout.buffer, Vulkan::MEMORY_ACCESS_READ_BIT),
 			   width * height * sizeof(uint32_t));
 		device->unmap_host_buffer(*scanout.buffer, Vulkan::MEMORY_ACCESS_READ_BIT);
 	}
@@ -98,21 +97,25 @@ void vk_rasterize()
 		frontend->set_vi_register(RDP::VIRegister::XScale, *GET_GFX_INFO(VI_X_SCALE_REG));
 		frontend->set_vi_register(RDP::VIRegister::YScale, *GET_GFX_INFO(VI_Y_SCALE_REG));
 
+		RDP::Quirks quirks;
+		quirks.set_native_texture_lod(vk_native_texture_lod);
+		quirks.set_native_resolution_tex_rect(vk_native_tex_rect);
+		frontend->set_quirks(quirks);
+
 		frontend->begin_frame_context();
 
 		unsigned width = 0;
 		unsigned height = 0;
-		std::vector<RDP::RGBA> cols;
-		vk_blit(cols, width, height);
+		vk_blit(width, height);
 
 		if (width == 0 || height == 0)
 		{
-			screen_swap(true);
+			if (!skip_swap_clear)
+				screen_swap(true);
 			return;
 		}
 
 		struct frame_buffer buf = {0};
-		buf.pixels = (video_pixel *)cols.data();
 		buf.valid = true;
 		buf.height = height;
 		buf.width = width;
@@ -129,7 +132,7 @@ void vk_process_commands()
 
 		const uint32_t DP_CURRENT = *GET_GFX_INFO(DPC_CURRENT_REG) & 0x00FFFFF8;
 		const uint32_t DP_END = *GET_GFX_INFO(DPC_END_REG) & 0x00FFFFF8;
-        *GET_GFX_INFO(DPC_STATUS_REG) &= ~DP_STATUS_FREEZE;
+
 		int length = DP_END - DP_CURRENT;
 		if (length <= 0)
 			return;
@@ -187,7 +190,7 @@ void vk_process_commands()
 			if (RDP::Op(command) == RDP::Op::SyncFull)
 			{
 				// For synchronous RDP:
-				if (frontend)
+				if (vk_synchronous && frontend)
 					frontend->wait_for_timeline(frontend->signal_timeline());
 				*gfx.MI_INTR_REG |= DP_INTERRUPT;
 				gfx.CheckInterrupts();
@@ -228,7 +231,8 @@ bool vk_init()
 	uintptr_t aligned_rdram = reinterpret_cast<uintptr_t>(gfx.RDRAM);
 	uintptr_t offset = 0;
 
-    if (device->get_device_features().supports_external_memory_host)
+
+	if (device->get_device_features().supports_external_memory_host)
 	{
 		size_t align = device->get_device_features().host_memory_properties.minImportedHostPointerAlignment;
 		offset = aligned_rdram & (align - 1);
@@ -241,7 +245,7 @@ bool vk_init()
 	}
 
 	device->set_context(*context);
-	device->init_frame_contexts(1);
+	device->init_frame_contexts(3);
 	::RDP::CommandProcessorFlags flags = 0;
 
 	switch (vk_rescaling)
@@ -261,7 +265,7 @@ bool vk_init()
 	default:
 		break;
 	}
-	if ((vk_rescaling > 1) && vk_ssreadbacks)
+	if (vk_rescaling >1 && vk_ssreadbacks)
 		flags |= RDP::COMMAND_PROCESSOR_FLAG_SUPER_SAMPLED_READ_BACK_BIT;
 	if (vk_ssdither)
 		flags |= RDP::COMMAND_PROCESSOR_FLAG_SUPER_SAMPLED_DITHER_BIT;
@@ -273,21 +277,12 @@ bool vk_init()
 		frontend.reset();
 		return false;
 	}
+
+	RDP::Quirks quirks;
+	quirks.set_native_texture_lod(vk_native_texture_lod);
+	quirks.set_native_resolution_tex_rect(vk_native_tex_rect);
+	frontend->set_quirks(quirks);
+
 	running = true;
 	return true;
-}
-
-static const VkApplicationInfo parallel_app_info = {
-	VK_STRUCTURE_TYPE_APPLICATION_INFO,
-	nullptr,
-	"paraLLEl-RDP",
-	0,
-	"Granite",
-	0,
-	VK_API_VERSION_1_1,
-};
-
-const VkApplicationInfo *parallel_get_application_info(void)
-{
-	return &parallel_app_info;
 }
