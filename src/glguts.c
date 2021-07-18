@@ -351,12 +351,13 @@ void screen_init()
         }
 
     }
+
     /* Get the core Video Extension function pointers from the library handle */
-     if (!m_fullscreen) {
+    if (!m_fullscreen) {
         LONG style = GetWindowLong(gfx.hWnd, GWL_STYLE);
 
-        if ((style & (WS_SIZEBOX | WS_MAXIMIZEBOX)) == 0) {
-            style |= WS_SIZEBOX | WS_MAXIMIZEBOX;
+        if ((style & (WS_SIZEBOX)) == 0) {
+            style |= WS_SIZEBOX;
             SetWindowLong(gfx.hWnd, GWL_STYLE, style);
 
             // Fix client size after changing the window style, otherwise the PJ64
@@ -368,7 +369,6 @@ void screen_init()
             }
         }
     }
-
     PIXELFORMATDESCRIPTOR win_pfd = {
         sizeof(PIXELFORMATDESCRIPTOR), 1,
         PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER, // Flags
