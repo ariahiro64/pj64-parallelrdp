@@ -13,17 +13,19 @@ static void file_to_dir(char* file_path, char* directory, size_t size)
 	char dir_buf[MAX_PATH] = { 0 };
 
 	char* str = strtok(file_path, "\\");
+	char* str2 = NULL;
 	while (str != NULL)
 	{
-		if (strstr(str, "."))
-		{
+		str2 = strtok(NULL, "\\");
+		if (str2 == NULL)
+		{ // no more '\' found
 			break;
 		}
 
 		strcat(dir_buf, str);
 		strcat(dir_buf, "\\");
 
-		str = strtok(NULL, "\\");
+		str = str2;
 	}
 
 	strncpy(directory, dir_buf, size);
@@ -31,7 +33,7 @@ static void file_to_dir(char* file_path, char* directory, size_t size)
 
 void ini_init()
 {
-	char buf[MAX_PATH];
+	char buf[MAX_PATH] = { 0 };
 	GetModuleFileNameA((HINSTANCE)&__ImageBase, buf, MAX_PATH);
 
 	file_to_dir(buf, ini_file, MAX_PATH);
