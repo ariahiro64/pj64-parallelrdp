@@ -36,8 +36,8 @@ static uint32_t buffer_size = (640*8) * (480*8) * sizeof(uint32_t);
 
 int32_t tex_width[TEX_NUM];
 int32_t tex_height[TEX_NUM];
-static bool m_fullscreen;
 
+static bool m_fullscreen;
 static int rotate_buffer;
 
 #define MSG_BUFFER_LEN 256
@@ -211,9 +211,10 @@ static GLuint gl_shader_link(GLuint vert, GLuint frag)
     return program;
 }
 
-bool screen_write(struct frame_buffer *fb)
+void screen_write(struct frame_buffer *fb)
 {
     bool buffer_size_changed = tex_width[rotate_buffer] != fb->width || tex_height[rotate_buffer] != fb->height;
+    char* offset = rotate_buffer * buffer_size;
 
     // check if the framebuffer size has changed
     if (buffer_size_changed)
@@ -224,18 +225,16 @@ bool screen_write(struct frame_buffer *fb)
         glPixelStorei(GL_UNPACK_ROW_LENGTH, fb->pitch);
         // reallocate texture buffer on GPU
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, tex_width[rotate_buffer],
-                     tex_height[rotate_buffer], 0, TEX_FORMAT, TEX_TYPE, fb->pixels);
+                     tex_height[rotate_buffer], 0, TEX_FORMAT, TEX_TYPE, offset);
     }
     else
     {
         // copy local buffer to GPU texture buffer
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, tex_width[rotate_buffer], tex_height[rotate_buffer],
-                        TEX_FORMAT, TEX_TYPE, fb->pixels);
+                        TEX_FORMAT, TEX_TYPE, offset);
     }
 
     rotate_buffer = (rotate_buffer + 1) % TEX_NUM;
-
-    return buffer_size_changed;
 }
 
 void screen_read(struct frame_buffer *fb, bool alpha)
@@ -243,13 +242,13 @@ void screen_read(struct frame_buffer *fb, bool alpha)
     GLint vp[4];
     glGetIntegerv(GL_VIEWPORT, vp);
 
-    fb->width = vp[2];
+    fb->width = vp[2] & ~3;
     fb->height = vp[3];
     fb->pitch = fb->width;
 
     if (fb->pixels)
     {
-        glReadPixels(vp[0], vp[1], vp[2], vp[3], alpha ? GL_RGBA : GL_RGB, TEX_TYPE, fb->pixels);
+        glReadPixels(vp[0], vp[1], fb->width, fb->height, alpha ? GL_RGBA : GL_RGB, TEX_TYPE, fb->pixels);
     }
 }
 
@@ -331,6 +330,12 @@ void gl_screen_close(void)
     glDeleteBuffers(1, &buffer);
     glDeleteProgram(program);
 }
+
+uint8_t* screen_get_texture_data()
+{
+    return buffer_data + (rotate_buffer * buffer_size);
+}
+
 void screen_init()
 {
     memset(tex_width, 0, sizeof(int32_t) * TEX_NUM);
@@ -385,16 +390,14 @@ void screen_init()
 
     int32_t win_pf = ChoosePixelFormat(dc, &win_pfd);
     if (!win_pf) {
-  msg_error("Can't choose pixel format.");
-
+        msg_error("Can't choose pixel format.");
     }
     SetPixelFormat(dc, win_pf, &win_pfd);
 
     // create legacy context, required for wglGetProcAddress to work properly
     glrc = wglCreateContext(dc);
     if (!glrc || !wglMakeCurrent(dc, glrc)) {
-  msg_error("Can't create OpenGL context.");
-
+        msg_error("Can't create OpenGL context.");
     }
 
     // load wgl extension
@@ -413,8 +416,7 @@ void screen_init()
     if (!glrc_core || !wglMakeCurrent(dc, glrc_core)) {
         // rendering probably still works with the legacy context, so just send
         // a warning
-            msg_warning("Can't create OpenGL 3.3 core context.");
-
+        msg_warning("Can't create OpenGL 3.3 core context.");
     }
 
     // enable vsync
@@ -486,11 +488,6 @@ void screen_swap(bool blank)
 
    SwapBuffers(dc);
 
-}
-
-uint8_t* screen_get_texture_data()
-{
-    return buffer_data + (rotate_buffer * buffer_size);
 }
 
 void screen_toggle_fullscreen()
