@@ -255,6 +255,7 @@ INSTALL  ?= install
 MKDIR ?= mkdir -p
 COMPILE.c = $(Q_CC)$(CC) $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
 COMPILE.cc = $(Q_CXX)$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
+COMPILE.rc = windres
 LINK.o = $(Q_LD)$(CXX) $(CXXFLAGS) $(LDFLAGS) $(TARGET_ARCH)
 
 # set special flags for given Makefile parameters
@@ -288,9 +289,11 @@ SOURCE = \
   $(SRCDIR)/gfx_1.3.c \
   $(SRCDIR)/gl_core_3_3.c \
   $(SRCDIR)/glguts.c \
-  $(SRCDIR)/wgl_ext.c 
-
-
+  $(SRCDIR)/wgl_ext.c \
+  $(SRCDIR)/config_gui.c \
+  $(SRCDIR)/config_gui_resources.rc \
+  $(SRCDIR)/config.c \
+  $(SRCDIR)/ini.c
 
 HAVE_PARALLEL_RDP ?= 1
 include $(VIDEODIR_PARALLEL)/config.mk
@@ -298,6 +301,7 @@ include $(VIDEODIR_PARALLEL)/config.mk
 CFLAGS   += $(PARALLEL_RDP_CFLAGS) -DHAVE_PARALLEL_RDP
 CXXFLAGS += $(PARALLEL_RDP_CXXFLAGS) -DHAVE_PARALLEL_RDP
 CXXFLAGS += $(PARALLEL_RDP_INCLUDE_DIRS) -DHAVE_PARALLEL_RDP
+LDLIBS += -lcomctl32
 SOURCE +=  $(PARALLEL_RDP_SOURCES_CXX) #$(VIDEODIR_PARALLEL)/parallel.cpp $(VIDEODIR_PARALLEL)/rdp.cpp
 SOURCE += $(PARALLEL_RDP_SOURCES_C)
 SOURCE += $(SRCDIR)/parallel_imp.cpp
@@ -307,6 +311,7 @@ LDFLAGS += $(PARALLEL_RDP_LDFLAGS)
 # generate a list of object files build, make a temporary directory for them
 OBJECTS := $(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(filter %.c, $(SOURCE)))
 OBJECTS += $(patsubst $(SRCDIR)/%.cpp, $(OBJDIR)/%.o, $(filter %.cpp, $(SOURCE)))
+OBJECTS += $(patsubst $(SRCDIR)/%.rc, $(OBJDIR)/%.o, $(filter %.rc, $(SOURCE)))
 OBJDIRS = $(dir $(OBJECTS))
 $(shell $(MKDIR) $(OBJDIRS))
 
@@ -365,6 +370,10 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.c
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 	$(COMPILE.cc) -o $@ $<
+
+$(OBJDIR)/%.o: $(SRCDIR)/%.rc
+	$(COMPILE.rc) -o $@ $<
+
 
 $(TARGET): $(OBJECTS)
 	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -o $@

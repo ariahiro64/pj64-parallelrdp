@@ -1,0 +1,146 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "config_gui_resources.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "winres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (United States) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "config_gui_resources.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""winres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+FormKickstart DIALOGEX 0, 0, 227, 200
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CENTER | DS_CENTERMOUSE | WS_POPUP | WS_CAPTION
+EXSTYLE WS_EX_APPWINDOW
+CAPTION "Run"
+FONT 8, "MS Shell Dlg", 400, 0, 0x0
+BEGIN
+    DEFPUSHBUTTON   "OK",ButtonRun,66,180,36,18
+    PUSHBUTTON      "Cancel",ButtonQuit,126,180,30,18
+    COMBOBOX        ComboResolution,17,22,103,61,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Fullscreen",CheckFullscreen,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,150,48,10,WS_EX_TRANSPARENT
+    CONTROL         "Vertical sync",CheckVerticalSync,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,114,150,54,10,WS_EX_TRANSPARENT
+    LTEXT           "Screen size",StaticResolution,18,13,96,8
+    COMBOBOX        ComboUpscaler,18,54,71,61,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "N64 resolution upscale",Upscaling,18,42,94,8
+    CONTROL         "Supersampled dither",SSDITHER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,102,78,10,WS_EX_TRANSPARENT
+    CONTROL         "Supersampled RDRAM reads",SSREADS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,114,102,102,10,WS_EX_TRANSPARENT
+    COMBOBOX        ComboDeinterlace,108,54,71,61,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Deinterlacer",Upscaling2,108,42,94,8
+    CONTROL         "Integer scaling",INTEGERSCALE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,114,126,66,10,WS_EX_TRANSPARENT
+    CONTROL         "VI AA",VIAA,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,114,30,10,WS_EX_TRANSPARENT
+    CONTROL         "VI bilinear filtering",VIBilinear,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,114,114,72,10,WS_EX_TRANSPARENT
+    CONTROL         "VI divot filter",VIDIVOT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,54,114,54,10,WS_EX_TRANSPARENT
+    CONTROL         "VI de-dithering",VDEDITHER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,126,60,10,WS_EX_TRANSPARENT
+    CONTROL         "Native texture LOD",NATIVETEXLOD,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,138,78,10,WS_EX_TRANSPARENT
+    CONTROL         "Native textrects",NATIVETEXRECT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,114,138,66,10,WS_EX_TRANSPARENT
+    COMBOBOX        ComboUpscaler2,18,84,71,61,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Downscaling of upscaled buffer",Upscaling3,18,72,102,8
+    CONTROL         "Force widescreen",CheckWidescreen,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,162,72,10,WS_EX_TRANSPARENT
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    FormKickstart, DIALOG
+    BEGIN
+        MOCKUP, 0, 100, 700, -25, "..\..\..\..\Desktop\LightcoreDemosystem.png"
+        LEFTMARGIN, 6
+        RIGHTMARGIN, 225
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 146
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+FormKickstart AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+#endif    // English (United States) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Norwegian Bokmal (Norway) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_NOR)
+LANGUAGE LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+//KickstartIcon           ICON                    "Kickstart.ico"
+
+#endif    // Norwegian Bokmal (Norway) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+
