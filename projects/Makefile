@@ -285,8 +285,9 @@ VIDEODIR_PARALLEL  = $(SRCDIR)/parallel-rdp
 PARALLEL_RDP_IMPLEMENTATION = $(SRCDIR)/parallel-rdp
 # list of source files to compile
 SOURCE = \
-	$(SRCDIR)/gfx_1.3.c \
-	$(SRCDIR)/glguts.c \
+  $(SRCDIR)/gfx_1.3.c \
+  $(SRCDIR)/gl_core_3_3.c \
+  $(SRCDIR)/glguts.c \
   $(SRCDIR)/wgl_ext.c 
 
 

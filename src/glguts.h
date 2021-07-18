@@ -26,6 +26,10 @@ extern "C"
         bool valid;
     };
 
+    void msg_error(const char * err, ...);
+    void msg_warning(const char* err, ...);
+    void msg_debug(const char* err, ...);
+
     void screen_write(struct frame_buffer *fb);
     void screen_read(struct frame_buffer *fb, bool alpha);
     void screen_init();

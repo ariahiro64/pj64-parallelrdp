@@ -11,7 +11,6 @@ static HWND statusbar = NULL;
 static HDC dc;
 static HGLRC glrc;
 static HGLRC glrc_core;
-static bool fullscreen;
 
 // framebuffer texture states
 int32_t window_width;
@@ -21,7 +20,7 @@ bool window_integerscale;
 bool window_vsync;
 bool window_widescreen;
 
-#include "gl_core_3_3.c"
+#include "gl_core_3_3.h"
 #define SHADER_HEADER "#version 330 core\n"
 #define TEX_FORMAT GL_RGBA
 #define TEX_TYPE GL_UNSIGNED_BYTE
@@ -48,7 +47,7 @@ void msg_error(const char * err, ...)
     va_start(arg, err);
     char buf[MSG_BUFFER_LEN];
     vsprintf_s(buf, sizeof(buf), err, arg);
-    MessageBoxA(0, buf, "parallel : fatal error", MB_OK);
+    MessageBoxA(0, buf, "paraLLEl: fatal error", MB_OK);
     va_end(arg);
     exit(0);
 }
@@ -59,7 +58,7 @@ void msg_warning(const char* err, ...)
     va_start(arg, err);
     char buf[MSG_BUFFER_LEN];
     vsprintf_s(buf, sizeof(buf), err, arg);
-    MessageBox(0, buf, "parallel" ": warning", MB_OK);
+    MessageBox(0, buf, "paraLLEl: warning", MB_OK);
     va_end(arg);
 }
 
@@ -214,7 +213,7 @@ static GLuint gl_shader_link(GLuint vert, GLuint frag)
 void screen_write(struct frame_buffer *fb)
 {
     bool buffer_size_changed = tex_width[rotate_buffer] != fb->width || tex_height[rotate_buffer] != fb->height;
-    char* offset = rotate_buffer * buffer_size;
+    char* offset = (char*)(rotate_buffer * buffer_size);
 
     // check if the framebuffer size has changed
     if (buffer_size_changed)

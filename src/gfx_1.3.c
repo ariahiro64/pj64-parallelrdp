@@ -37,10 +37,9 @@
 #define INI_STRNICMP(s1, s2, cnt) (strcmp(s1, s2))
 #include "ini.h"
 
-typedef struct settingkey {
+struct settingkey_t {
 	char name[255];
 	int val;
-	
 };
 
 #define KEY_FULLSCREEN 0
@@ -64,7 +63,7 @@ typedef struct settingkey {
 #define KEY_WIDESCREEN 18
 #define NUM_CONFIGVARS 19
 
-struct settingkey setting_defaults[NUM_CONFIGVARS]=
+struct settingkey_t setting_defaults[NUM_CONFIGVARS]=
 {
 	{"KEY_FULLSCREEN", 0},
 	{"KEY_UPSCALING", 0},
@@ -122,7 +121,6 @@ void init_coresettings() {
 		
 		int section =
 			ini_find_section(ini, "Settings", strlen("Settings"));
-		int vars_infile = ini_property_count(ini, section);
 		bool save = false;
 		for (int i = 0; i < NUM_CONFIGVARS; i++) {
 			int idx =
@@ -154,14 +152,10 @@ void init_coresettings() {
 	}
 }
 
-
-
 static bool warn_hle = false;
-static bool plugin_initialized;
 
 GFX_INFO gfx;
 uint32_t rdram_size;
-
 
 static bool is_valid_ptr(void *ptr, uint32_t bytes)
 {
@@ -199,7 +193,6 @@ void plugin_init(void)
     if (!is_valid_ptr(&gfx.RDRAM[0x7f0000], 16)) {
         rdram_size /= 2;
     }
-
 }
 
 void plugin_close(void)
@@ -215,7 +208,7 @@ EXPORT void CALL GetDllInfo(PLUGIN_INFO* PluginInfo)
 {
     PluginInfo->Version = 0x0103;
     PluginInfo->Type  = PLUGIN_TYPE_GFX;
-    sprintf(PluginInfo->Name, "parallel");
+    sprintf(PluginInfo->Name, "ParaLLEl");
 
     PluginInfo->NormalMemory = TRUE;
     PluginInfo->MemoryBswaped = TRUE;
@@ -223,7 +216,6 @@ EXPORT void CALL GetDllInfo(PLUGIN_INFO* PluginInfo)
 
 EXPORT BOOL CALL InitiateGFX(GFX_INFO Gfx_Info)
 {
-    
     gfx = Gfx_Info;
     plugin_init();
     return TRUE;
@@ -233,7 +225,6 @@ EXPORT void CALL DllConfig(HWND hParent)
 {
 	STARTUPINFO si = {0};
 	PROCESS_INFORMATION pi = {0};
-	HANDLE hThread;
 	si.cb = sizeof(STARTUPINFO);
 	CreateProcess(NULL, "parasettings.exe", NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi);
 	ResumeThread(pi.hThread);
@@ -296,8 +287,6 @@ EXPORT void CALL DrawScreen(void)
 EXPORT void CALL ReadScreen(void **dest, long *width, long *height)
 {
 }
-
-
 
 EXPORT void CALL RomClosed(void)
 {
