@@ -27,14 +27,18 @@ struct settingkey_t settings[NUM_CONFIGVARS] =
 
 void config_init()
 {
-	FILE* file = fopen("parasettings.ini", "r");
-    if (!file)
+	// initialize ini parser
+	ini_init();
+
+	FILE* file = fopen(ini_file, "r");
+    if (file == NULL)
     { // file doesn't exist, create it
         config_save();
     }
     else
     { // file exists, read it
         config_load();
+        fclose(file);
     }
 }
 

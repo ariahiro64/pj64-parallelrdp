@@ -342,7 +342,7 @@ void screen_init()
     rotate_buffer = 0;
 
     if (gfx.hStatusBar)statusbar = gfx.hStatusBar;
-    if(!statusbar)
+    if (!statusbar)
     {
         statusbar = FindWindowExA(gfx.hWnd, NULL, STATUSCLASSNAME, NULL);
         if (statusbar == NULL)
@@ -384,7 +384,6 @@ void screen_init()
     dc = GetDC(gfx.hWnd);
     if (!dc) {
         msg_error("Can't get device context.");
-
     }
 
     int32_t win_pf = ChoosePixelFormat(dc, &win_pfd);

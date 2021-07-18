@@ -101,6 +101,9 @@ EXPORT void CALL GetDllInfo(PLUGIN_INFO* PluginInfo)
 
 EXPORT BOOL CALL InitiateGFX(GFX_INFO Gfx_Info)
 {
+    // initialize config
+    config_init();
+
     gfx = Gfx_Info;
     plugin_init();
     return TRUE;
@@ -211,10 +214,6 @@ EXPORT void CALL FBGetFrameBufferInfo(void *pinfo)
 
 EXPORT BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
-    // initialize config
-    ini_init();
-    config_init();
-
     // set hInstance for the config GUI
     config_gui_hInstance = hModule;
     return TRUE;

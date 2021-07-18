@@ -5,7 +5,7 @@
 
 EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 
-static char config_path[MAX_PATH];
+char ini_file[MAX_PATH];
 
 // extracts directory from full file path
 static void file_to_dir(char* file_path, char* directory, size_t size)
@@ -34,21 +34,21 @@ void ini_init()
 	char buf[MAX_PATH];
 	GetModuleFileNameA((HINSTANCE)&__ImageBase, buf, MAX_PATH);
 
-	file_to_dir(buf, config_path, MAX_PATH);
-	strcat(config_path, "\\pj64-parallelrdp.ini");
+	file_to_dir(buf, ini_file, MAX_PATH);
+	strcat(ini_file, "\\pj64-parallelrdp.ini");
 }
 
 bool ini_set_value(const char* key, int value)
 {
 	char num_str[10];
 	itoa(value, num_str, 10);
-    return WritePrivateProfileStringA("Settings", key, num_str, config_path);
+    return WritePrivateProfileStringA("Settings", key, num_str, ini_file);
 }
 
 bool ini_get_value(const char* key, int* value)
 {
     char buf[MAX_PATH];
-    GetPrivateProfileStringA("Settings", key, NULL, buf, MAX_PATH, config_path);
+    GetPrivateProfileStringA("Settings", key, NULL, buf, MAX_PATH, ini_file);
     if (buf == NULL)
     {
     	*value = 0;

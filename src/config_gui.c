@@ -16,9 +16,9 @@ struct res_t
 HMODULE config_gui_hInstance;
 
 #define MAXNUMRES 4096
-char* selectedAspect = "";
+char* selectedAspect     = "";
 char* currentIndexAspect = "";
-char*  listItemAspect = "";
+char* listItemAspect     = "";
 int currentIndexResolution = 0;
 int nRes = 0;
 struct res_t ress[MAXNUMRES];
@@ -47,7 +47,7 @@ BOOL CALLBACK DlgFunc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_INITDIALOG:
 	{
-		SetWindowText(hWnd, (LPCSTR)"Parallel-RDP config");
+		SetWindowText(hWnd, (LPCSTR)"paraLLEl-RDP config");
 
 		char s[500];
 		int i = 0;
