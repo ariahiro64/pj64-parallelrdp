@@ -16,7 +16,7 @@ extern "C"
     extern unsigned vk_downscaling_steps;
     extern bool vk_native_texture_lod;
     extern bool vk_native_tex_rect;
-    extern bool vk_divot_filter, vk_gamma_dither;
+    extern bool vk_synchronous, vk_divot_filter, vk_gamma_dither;
     extern bool vk_vi_aa, vk_vi_scale, vk_dither_filter;
     extern bool vk_interlacing;
 

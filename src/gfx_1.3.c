@@ -142,24 +142,27 @@ EXPORT void CALL RomOpen(void)
     window_fullscreen = settings[KEY_FULLSCREEN].val;
     window_width = settings[KEY_SCREEN_WIDTH].val;
     window_height = settings[KEY_SCREEN_HEIGHT].val;
+    window_widescreen = settings[KEY_WIDESCREEN].val;
+    window_vsync = settings[KEY_VSYNC].val;
+    window_integerscale = settings[KEY_INTEGER].val;
+
     vk_rescaling = settings[KEY_UPSCALING].val;
     vk_ssreadbacks = settings[KEY_SSREADBACKS].val;
-    window_integerscale = settings[KEY_INTEGER].val;
     vk_ssdither = settings[KEY_SSDITHER].val;
+
     vk_interlacing = settings[KEY_DEINTERLACE].val;
     vk_overscan = settings[KEY_OVERSCANCROP].val;
     vk_native_texture_lod = settings[KEY_NATIVETEXTLOD].val;
     vk_native_tex_rect = settings[KEY_NATIVETEXTRECT].val;
     vk_divot_filter = settings[KEY_DIVOT].val;
     vk_gamma_dither = settings[KEY_GAMMADITHER].val;
-    vk_vi_aa = settings[KEY_AA].val;
-    vk_vi_scale = settings[KEY_VIBILERP].val;
     vk_dither_filter = settings[KEY_VIDITHER].val;
     vk_interlacing = settings[KEY_DEINTERLACE].val;
-    vk_interlacing = settings[KEY_DEINTERLACE].val;
+    vk_vi_aa = settings[KEY_AA].val;
+    vk_vi_scale = settings[KEY_VIBILERP].val;
     vk_downscaling_steps = settings[KEY_DOWNSCALING].val;
-    window_vsync = settings[KEY_VSYNC].val;
-    window_widescreen = settings[KEY_WIDESCREEN].val;
+    vk_synchronous  = settings[KEY_SYNCHRONOUS].val;
+
     vk_init();
 }
 

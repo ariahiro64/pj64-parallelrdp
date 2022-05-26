@@ -20,7 +20,8 @@
 #define KEY_VSYNC 16
 #define KEY_DOWNSCALING 17
 #define KEY_WIDESCREEN 18
-#define NUM_CONFIGVARS 19
+#define KEY_SYNCHRONOUS 19
+#define NUM_CONFIGVARS 20
 
 struct settingkey_t
 {

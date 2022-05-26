@@ -143,6 +143,7 @@ BOOL CALLBACK DlgFunc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	SendDlgItemMessage(hWnd, NATIVETEXLOD, BM_SETCHECK, settings[KEY_NATIVETEXTLOD].val, 0);
 	SendDlgItemMessage(hWnd, NATIVETEXRECT, BM_SETCHECK, settings[KEY_NATIVETEXTRECT].val, 0);
 	SendDlgItemMessage(hWnd, CheckVerticalSync, BM_SETCHECK, settings[KEY_VSYNC].val, 0);
+	SendDlgItemMessage(hWnd, CheckSynchronous, BM_SETCHECK, settings[KEY_SYNCHRONOUS].val, 0);
 	SendDlgItemMessage(hWnd, CheckWidescreen, BM_SETCHECK, settings[KEY_WIDESCREEN].val, 0);
 
 	break;
@@ -172,6 +173,7 @@ BOOL CALLBACK DlgFunc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			settings[KEY_SCREEN_HEIGHT].val = ress[SendDlgItemMessage(hWnd, ComboResolution, CB_GETCURSEL, 0, 0)].h;
 			settings[KEY_FULLSCREEN].val = SendDlgItemMessage(hWnd, CheckFullscreen, BM_GETCHECK, 0, 0);
 			settings[KEY_VSYNC].val = SendDlgItemMessage(hWnd, CheckVerticalSync, BM_GETCHECK, 0, 0);
+			settings[KEY_SYNCHRONOUS].val = SendDlgItemMessage(hWnd, CheckSynchronous, BM_GETCHECK, 0, 0);
 			settings[KEY_DOWNSCALING].val = SendDlgItemMessage(hWnd, ComboUpscaler2, CB_GETCURSEL, 0, 0);
 			settings[KEY_WIDESCREEN].val = SendDlgItemMessage(hWnd, CheckWidescreen, BM_GETCHECK, 0, 0);
 			config_save();

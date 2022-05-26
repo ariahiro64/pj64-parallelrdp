@@ -22,7 +22,8 @@ struct settingkey_t settings[NUM_CONFIGVARS] =
     {"KEY_NATIVETEXTRECT", 1},
     {"KEY_VSYNC", 1},
     {"KEY_DOWNSCALE", 1},
-    {"KEY_WIDESCREEN", 0}
+    {"KEY_WIDESCREEN", 0},
+    {"KEY_SYNCHRONOUS", 1}
 };
 
 void config_init()

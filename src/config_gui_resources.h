@@ -37,6 +37,7 @@
 #define Upscaling3                      1023
 #define CheckVerticalSync2              1024
 #define CheckWidescreen                 1024
+#define CheckSynchronous                1025
 
 // Next default values for new objects
 // 
