@@ -1,7 +1,6 @@
 #include "ini.h"
 #include <windows.h>
 #include <stdbool.h>
-#include <unistd.h>
 
 EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 
