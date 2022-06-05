@@ -7,7 +7,7 @@ elseif (MSVC)
 endif()
 
 # Include CMakeLists.txt for parallel-rdp-standalone source.
-include(${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.standalone.txt)
+include(${CMAKE_CURRENT_SOURCE_DIR}/parallel-rdp-standalone.cmake)
 
 set(src_files
     parallel_imp.cpp
