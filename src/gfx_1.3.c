@@ -37,6 +37,8 @@
 #include "config_gui.h"
 #include "config.h"
 
+#include "git.h"
+
 static bool warn_hle = false;
 
 GFX_INFO gfx;
@@ -91,9 +93,13 @@ EXPORT void CALL CaptureScreen(char* directory)
 
 EXPORT void CALL GetDllInfo(PLUGIN_INFO* PluginInfo)
 {
+    // Copy substring of git hash into buffer.
+    char hash[8] = {0};
+    strncpy(hash, GIT_HEAD_SHA1, 7);
+
     PluginInfo->Version = 0x0103;
     PluginInfo->Type  = PLUGIN_TYPE_GFX;
-    sprintf(PluginInfo->Name, "ParaLLEl");
+    snprintf(PluginInfo->Name, sizeof(PluginInfo->Name), "ParaLLEl-RDP rev.%s", hash);
 
     PluginInfo->NormalMemory = TRUE;
     PluginInfo->MemoryBswaped = TRUE;
