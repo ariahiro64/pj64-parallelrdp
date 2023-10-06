@@ -3,9 +3,9 @@
 #include "parallel_imp.h"
 #include <memory>
 #include <vector>
-#include "parallel-rdp/rdp_device.hpp"
-#include "vulkan/context.hpp"
-#include "vulkan/device.hpp"
+#include "parallel-rdp/parallel-rdp/rdp_device.hpp"
+#include "parallel-rdp/vulkan/context.hpp"
+#include "parallel-rdp/vulkan/device.hpp"
 
 using namespace Vulkan;
 using namespace std;
